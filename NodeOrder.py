@@ -3,19 +3,45 @@ from Constraint import ConstraintSatisfactionProblem
 
 
 ### HUERISTICS ###
-def AnyValue(csp):
-    pass
+class NodeOrder:
+    def __init__(self,csp,order):
+        self.csp    = csp
+        self.order  = order
+        if order == "MRV":
+            self.queue = self.MinimumRemainingValues(csp)
+        elif order == "RandomOrder":
+            self.queue = self.RandomOrder(csp)
+        elif order == "Degree":
+            self.queue = self.Degree(csp)
+        else:
+            self.queue = self.NoOrder(csp)
+        
+    def RandomOrder(self, csp):
+        pass
 
-def MinimumRemainingValues(csp):
-    min = -1
-    var = ""
-    for key in csp.variables.iterkeys():
-        length = len(csp.variables[key])
-        if min < length:
-            var,max = key,length
-    return csp.variables[key]
+    def NoOrder(self, csp):
+        pass
+
+    def MinimumRemainingValues(self, csp):
+        minimum = -1
+        varKey = ""
+        for key in csp.variables.iterkeys():
+            length = len(csp.variables[key])
+            if minimum < length or minimum == -1:
+                varKey  = key
+                minimum = length
+        if minimum == -1:
+            return None
+        else:
+            return csp.variables[key]
     
 
-def Degree(csp):
+    def Degree(self, csp):
+        
+        pass
     
-    pass
+    def get(self,index):
+        return self.queue[index]
+        
+    def pop(self,index):
+        return self.queue.pop(index)
