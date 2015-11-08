@@ -1,6 +1,5 @@
 from Constraint import *
-
-
+from AC3 import *
 
 class PuzzleParser:
     def __init__(self):
@@ -43,7 +42,7 @@ class PuzzleParser:
             vars_str = ','.join(vars)
             # print(vars_str)
             relation = equation.replace('=','==')
-            function = eval("lambda {0}:{1}".format(vars_str,relation))
+            function = eval("lambda {0}:{1}".format(vars_str, relation))
             # print(stringFn)
             csp.constraints.append(GlobalConstraint(vars, function))
             
@@ -62,18 +61,12 @@ class PuzzleParser:
     #print(printDomains(csp.variables))
     #print(csp.constraints)
     
-    def setUpCrypt(self,csp):
-        # This setup is applicable to KenKen and Sudoku. For this example, it is a 3x3 board with each domain initialized to {1,2,3}
-        # The VarNames list can then be used as an index or key into the dictionary, ex. variables['A1'] will return the ConstraintVar object
-    
-        # Note that I could accomplish the same by hard coding the variables, for example ...
-        # A1 = ConstraintVar( [1,2,3],'A1' )
-        # A2 = ConstraintVar( [1,2,3],'A2' ) ...
-        # constraints.append( BinaryConstraint( A1, A2, lambda x,y: x != y ) )
-        # constraints.append( BinaryConstraint( A2, A1, lambda x,y: x != y ) ) ...
-        #   but you can see how tedious this would be.
-        # Get rid of spaces and carriage returns from input
-        
+    def setUpCrypt(self,input):
+        ## Instantiate the CSP object ##
+        csp     = ConstraintSatisfactionProblem()
+        ## Input should be a single line, defining one problem ##
+        input   = input.replace(' ','').replace('\r','').replace('\n','')
+        #Set up the variables
         delim,  equation = csp.input.split(',')
         vars,   solution = problems.split('=')
         varNames = vars.split(delim)
@@ -82,7 +75,7 @@ class PuzzleParser:
         
         # establish the allDiff constraint for each column and each row
         # for AC3, all constraints would be added to the queue 
-        
+        # lambda t,o,o,l,
         # for example, for rows A,B,C, generate constraints A1!=A2!=A3, B1!=B2...   
         for r in varNames:
             aRow = []

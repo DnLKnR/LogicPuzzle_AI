@@ -1,6 +1,7 @@
 import functools
 from functools import reduce
-
+from Backtracking import *
+from Parse import PuzzleParser
 def allDiff( constraints, v ):    
     # generate a list of constraints that implement the allDiff constraint for all variable combinations in v
     # constraints is a preconstructed list. v is a list of ConstraintVar instances.
@@ -17,6 +18,14 @@ def allDiff( constraints, v ):
 def AC3(csp):
     queue = []
     
+    while len(queue) > 0:
+        var = queue.pop(0)
+        if Revise(csp,var):
+            if len(var.domain) == 0:
+                return False
+            for n in var.n:
+                queue.append(n)
+    return True
     
     # for example, for cols 1,2,3 (with keys A1,B1,C1 ...) generate A1!=B1!=C1, A2!=B2 ...
     # for c in cols:
@@ -89,18 +98,6 @@ def printDomains( vars, n=3 ):
         count = count+1
         if ( 0 == count % n ):
             print(' ')
-
-def AC3(csp):
-    queue = []
-    
-    while len(queue) > 0:
-        var = queue.pop(0)
-        if Revise(csp,var):
-            if len(var.domain) == 0:
-                return False
-            for n in var.n:
-                queue.append(n)
-    return True
     
 def tryAC3():
     # create a dictionary of ConstraintVars keyed by names in VarNames.
@@ -126,12 +123,6 @@ def tryAC3():
     constraints.append( BinaryConstraint( variables['C2'], variables['C3'], lambda x,y: abs(x-y) == 1 ) )
     constraints.append( BinaryConstraint( variables['C3'], variables['C2'], lambda x,y: abs(x-y) == 1 ) )
     
-    allDiff(constraints, [variables['A1'], variables['A2'], variables['A3']])
-    allDiff(constraints, [variables['B1'], variables['B2'], variables['B3']])
-    allDiff(constraints, [variables['C1'], variables['C2'], variables['C3']])
-    allDiff(constraints, [variables['A1'], variables['B1'], variables['C1']])
-    allDiff(constraints, [variables['A2'], variables['B2'], variables['C2']])
-    allDiff(constraints, [variables['A3'], variables['B3'], variables['C3']])
     allDiff(constraints, [variables['A1'], variables['A2'], variables['A3']])
     allDiff(constraints, [variables['B1'], variables['B2'], variables['B3']])
     allDiff(constraints, [variables['C1'], variables['C2'], variables['C3']])
@@ -242,6 +233,8 @@ text = f.read()
 f.close()
 for puzzle in text.split('\n'):
     csp = puzzleParser.setUpCrossMath(puzzle)
+    bts = BacktrackingSearch(csp,"","","")
+    bts.run()
     
     
 

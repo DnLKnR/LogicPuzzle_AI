@@ -13,9 +13,9 @@ class ConstraintVar:
     # instantiation example: ConstraintVar( [1,2,3],'A1' )
     # MISSING filling in neighbors to make it easy to determine what to add to queue when revise() modifies domain
     def __init__(self, d, n ):
-        self.domain = [ v for v in d ]
-        self.name = n
-        self.neighbors = []
+        self.domain     = [ v for v in d ]
+        self.name       = n
+        self.neighbors  = []
 
 class UnaryConstraint:
     # v1 is of class ConstraintVar
@@ -24,6 +24,19 @@ class UnaryConstraint:
     def __init__(self, v, fn):
         self.var = v
         self.func = fn
+        
+    def contains(self,var):
+        if self.var.name == var.name:
+            return True
+        return False
+    
+    def complete(self):
+        if len(self.var.domain) != 1:
+            return False
+        elif not self.func(self.var.domain[0]):
+            return False
+        else:
+            return True
 
 class BinaryConstraint:
     # v1 and v2 should be of class ConstraintVar
@@ -33,7 +46,20 @@ class BinaryConstraint:
         self.var1 = v1
         self.var2 = v2
         self.func = fn
-
+    
+    def contains(self,var):
+        if var.name in [self.var1.name, self.var2.name]:
+            return True
+        return False
+    
+    def complete(self):
+        if len(self.var1.domain) != 1 or len(self.var2.domain) != 1:
+            return False
+        elif not self.func(self.var1.domain[0],self.var2.domain[0]):
+            return False
+        else:
+            return True
+    
 class TernaryConstraint:
     # v1, v2, v3 should be of class ConstraintVar
     # fn is the lambda expression for the constraint
@@ -42,14 +68,38 @@ class TernaryConstraint:
         self.var1 = v1
         self.var2 = v2
         self.var3 = v3
+        self.func = fn
+        
+    def contains(self,var):
+        if var.name in [self.var1.name, self.var2.name, self.var3.name]:
+            return True
+        return False
 
 class GlobalConstraint:
     # vars should be a list of ConstraintVar objects
     # fn is the lambda expression for the constraint
     # instantiate example: GlobalConstraint( [A1, A2, A3], lambda A1,A2,A3: A1+A2+A3==10 ) 
     def __init__(self, vars, fn):
-        self.vars   = vars
-        self.fn     = fn
+        self.vars = vars
+        self.func = fn
+    
+    def contains(self, var):
+        for v in self.vars:
+            if var.name == v.name:
+                return True
+        return False
+        
+    def complete(self):
+        args = []
+        for var in self.vars:
+            if len(var.domain) != 1:
+                return False
+            args.append(var.domain[0])
+            
+        if not self.func(*args):
+            return False
+        else:
+            return True
     
 class ConstraintSatisfactionProblem:
     # This class contains the following variables:
