@@ -1,22 +1,44 @@
+from Constraint import *
 
 
-## PSEUDOCODE FROM THE BOOK ##
 
-def Backtracking_Search(csp):
-    return Backtrack({},csp)
+class BacktrackingSearch:
+    def __init__(self,NodeOrder,ValueOrder,Inference):
+        self.NodeOrder  = NodeOrder
+        self.ValueOrder = ValueOrder
+        self.Inference  = Inference
+    
+    def Backtracking(self,csp):
+        return self.Backtrack(dict(),csp)
+    
+    def Backtrack(self,assignment,csp):
+        if self.IsComplete(assignment):
+            return assignment
+        var = self.NodeOrder(csp)
+        for val in self.ValueOrder(var, assignment, csp):
+            if self.IsConsistent(var,assignment):
+                assignment[var.name] = val
+                inferences = self.Inference(csp, var, val)
+                if len(inferences) > 0:
+                    assignment.extend(inferences)
+                    result = self.Backtrack(assignment,csp)
+                    if len(result) > 0:
+                        return result
+            #Remove inferences and the new var from assignment
+            for key in assignment.iterkeys():
+                del assignment[key]
+            del assignment[var.name]
+        return None
 
-def Backtrack(assignment, csp):
-    if assignment is complete:
-        return assignment
-    var = Hueristic(csp)
-    for value in Order_Domain_Values(var, assignment, csp):
-        if value is consistent with assignment:
-            add {var = value} to assignment
-            inferences = Inference(csp, var, value)
-            if inferences != failure:
-                add inferences to assignment
-                result = Backtrack(assignment, csp)
-                if result != failure:
-                    return result
-        remove {var = value} and inferences from assignment
-    return failure
+    def IsConsistent(self,var,assignment):
+        return True
+    
+    def IsComplete(self,assignment):
+        for key in assignment.iterkeys():
+            if len(assignment[key].domain) != 1:
+                return False
+        return True    
+    
+    def IsFailure(self,var):
+        for key in var:
+            pass

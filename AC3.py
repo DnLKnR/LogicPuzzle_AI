@@ -1,97 +1,5 @@
 import functools
 from functools import reduce
-import itertools
-
-# This is demonstrating a "class" implementation of AC3. You can accomplish the same with lists. For the project, you can choose either.
-
-# The primary problem set-up consists of "variables" and "constraints":
-#   "variables" are a dictionary of constraint variables (of type ConstraintVar), example variables['A1']
-#   "constraints" are a set of binary constraints (of type BinaryConstraint)
-
-# First, Node Consistency is achieved by passing each UnaryConstraint of each variable to nodeConsistent().
-# Arc Consistency is achieved by passing "constraints" to Revise().
-# AC3 is not fully implemented, Revise() needs to be repeatedly called until all domains are reduced to a single value
-
-            
-
-
-class ConstraintVar:
-    # instantiation example: ConstraintVar( [1,2,3],'A1' )
-    # MISSING filling in neighbors to make it easy to determine what to add to queue when revise() modifies domain
-    def __init__(self, d, n ):
-        self.domain = [ v for v in d ]
-        self.name = n
-        self.neighbors = []
-
-class UnaryConstraint:
-    # v1 is of class ConstraintVar
-    # fn is the lambda expression for the constraint
-    # instantiation example: UnaryConstraint( variables['A1'], lambda x: x <= 2 )
-    def __init__(self, v, fn):
-        self.var = v
-        self.func = fn
-
-class BinaryConstraint:
-    # v1 and v2 should be of class ConstraintVar
-    # fn is the lambda expression for the constraint
-    # instantiate example: BinaryConstraint( A1, A2, lambda x,y: x != y ) 
-    def __init__(self, v1, v2, fn):
-        self.var1 = v1
-        self.var2 = v2
-        self.func = fn
-
-class GlobalConstraint:
-    # vars should be a list of ConstraintVar objects
-    # fn is the lambda expression for the constraint
-    # instantiate example: GlobalConstraint( [A1, A2, A3], lambda A1,A2,A3: x + y + z == 10 ) 
-    def __init__(self, vars, fn):
-        self.vars   = vars
-        self.fn     = fn
-    
-class ConstraintSatisfactionProblem:
-    # This class contains the following variables:
-    # input:       definition string,    ex. "+,basic+logic=pascal"
-    # variables:   a set of variables,   ex. ['a','b','c','d','e','f','g','h',....]
-    # domains:     a set of domains,     ex. {'a' : [1..26], 'b' : [1..26],....}
-    # constraints: a set of constraints, ex. [Constraint Object,...]
-    def __init__(self, variables=dict(), constraints=[]):
-        self.variables      = variables
-        self.constraints    = constraints
-
-### HUERISTICS ###
-def AnyValue(csp):
-    pass
-
-def MinimumRemainingValues(csp):
-    min = -1
-    var = ""
-    for key in csp.variables.iterkeys():
-        length = len(csp.variables[key])
-        if min < length:
-            var,max = key,length
-    return csp.variables[key]
-    
-    
-def LeastConstrainingValues(csp):
-    min = inf
-    var = ""
-    for key in csp.variables.iterkeys():
-        length = len(csp.variables[key])
-        if min > length:
-            var,max = key,length
-    return var
-        
-
-def Degree(csp):
-    
-    pass
-
-### INFERENCES ###
-def ForwardChecking(heuristicFn):
-    pass
-
-def MaintainingArcConsistency(heuristicFn):
-    pass
 
 def allDiff( constraints, v ):    
     # generate a list of constraints that implement the allDiff constraint for all variable combinations in v
@@ -103,94 +11,7 @@ def allDiff( constraints, v ):
             if ( i != j ) :
                 constraints.append(BinaryConstraint( v[i],v[j],fn ))
 
-class PuzzleParser:
-    def __init__(self):
-        pass
-    
-    def getVars(self,equation):
-        special_char = "!@#$%^&*()_+-=[]\\{}|;\':\",./<>? "
-        start,end,vars,is_special = 0, 0, [], False
-        length = len(equation)
-        while end <= length:
-            #Find the start index of a variable
-            while start < length and equation[start] in special_char:
-                start   += 1
-            #Find the end index of a variable
-            end = start + 1
-            while end < length and equation[end] not in special_char:
-                end     += 1
-            #if the range is greater than 0, we found a variable
-            if end - start > 0 and end <= length:
-                vars.append(equation[start:end])
-            #reset start to where we left off
-            start = end
-        
-        return vars
-    
-    def setUpCrossMath(self,input):
-        csp     = ConstraintSatisfactionProblem()
-        input   = input.replace(' ','').replace('\r','').replace('\n','')
-        equations = input.split(',')
-        variables = []
-        #Set up the variables and constraints
-        for equation in equations:
-            problem, solution = equation.split('=')
-            vars = self.getVars(problem)
-            for var in vars:
-                if var not in variables:
-                    variables.append(var)
-            vars_str = ','.join(vars)
-            # print(vars_str)
-            relation = equation.replace('=','==')
-            function = eval("lambda {0}:{1}".format(vars_str,relation))
-            # print(stringFn)
-            csp.constraints.append(GlobalConstraint(vars, function))
-            
-        #Set up the domains
-        length = len(variables)
-        for name in variables:
-            domain = list(range(1, length + 1))
-            csp.variables[name] = ConstraintVar(domain, name)
-        
-        printDomains(csp.variables, 3)
-        print("")
-        
-        return csp
-    
-    #print(csp.input)
-    #print(printDomains(csp.variables))
-    #print(csp.constraints)
-    
-    def setUpCrypt(self,csp):
-        # This setup is applicable to KenKen and Sudoku. For this example, it is a 3x3 board with each domain initialized to {1,2,3}
-        # The VarNames list can then be used as an index or key into the dictionary, ex. variables['A1'] will return the ConstraintVar object
-    
-        # Note that I could accomplish the same by hard coding the variables, for example ...
-        # A1 = ConstraintVar( [1,2,3],'A1' )
-        # A2 = ConstraintVar( [1,2,3],'A2' ) ...
-        # constraints.append( BinaryConstraint( A1, A2, lambda x,y: x != y ) )
-        # constraints.append( BinaryConstraint( A2, A1, lambda x,y: x != y ) ) ...
-        #   but you can see how tedious this would be.
-        # Get rid of spaces and carriage returns from input
-        
-        delim,  equation = csp.input.split(',')
-        vars,   solution = problems.split('=')
-        varNames = vars.split(delim)
-        for var in varNames:
-            csp.variables[var] = ConstraintVar(['Baseball','Tennis','Basketball','Soccer'],var)
-        
-        # establish the allDiff constraint for each column and each row
-        # for AC3, all constraints would be added to the queue 
-        
-        # for example, for rows A,B,C, generate constraints A1!=A2!=A3, B1!=B2...   
-        for r in varNames:
-            aRow = []
-            for k in variables.keys():
-                if ( str(k).startswith(r) ):
-            #accumulate all ConstraintVars contained in row 'r'
-                    aRow.append( variables[k] )
-        #add the allDiff constraints among those row elements
-            allDiff( csp.constraints, aRow )
+
 
 
 def AC3(csp):
@@ -261,31 +82,6 @@ def Revise( bc ):
             bc.var1.domain.remove(x)
         # if nothing in domain of variable2 satisfies the constraint when variable1==x, remove x
 #>>>>>
-        
-def nodeConsistent( uc ):
-    domain = list(uc.var.domain)
-    for x in domain:
-        if ( False == uc.func(x) ):
-            uc.var.domain.remove(x)
-
-def generalizedArcConsistent( gc, name ):
-    domains     = []
-    new_domain  = []
-    index       = -1
-    for i,v in enumarate(gc.vars):
-        if name == v.name:
-            index = i
-        domains.append(var.domain)
-    args_list = list(itertools.product(*domains))
-    for args in args_list:
-        if args[index] in new_domain:
-            continue
-        elif gc.fn(*args):
-            new_domain.append(args[index])
-    gc.vars[index].domain = new_domain
-    return (len(new_domain) > 0)
-    
-
 def printDomains( vars, n=3 ):
     count = 0
     for k in sorted(vars.keys()):
@@ -294,50 +90,6 @@ def printDomains( vars, n=3 ):
         if ( 0 == count % n ):
             print(' ')
 
-
-
-class BacktrackingSearch:
-    def __init__(self,NodeOrder,ValueOrder,Inference):
-        self.NodeOrder  = NodeOrder
-        self.ValueOrder = ValueOrder
-        self.Inference  = Inference
-    
-    def Backtracking(self,csp):
-        return Backtrack(dict(),csp)
-    
-    def Backtrack(self,assignment,csp):
-        if self.IsComplete(assignment):
-            return assignment
-        var = self.NodeOrder(csp)
-        for val in self.ValueOrder(var, assignment, csp):
-            if self.IsConsistent(var,assignment):
-                assignment[var.name] = val
-                inferences = self.Inference(csp, var, val)
-                if len(inferences) > 0:
-                    assignment.extend(inferences)
-                    result = Backtrack(assignment,csp)
-                    if len(result) > 0:
-                        return result
-            #Remove inferences and the new var from assignment
-            for key in assignment.iterkeys():
-                del assignment[key]
-            del assignment[var.name]
-        return None
-
-    def IsConsistent(self,var,assignment):
-        return True
-    
-    def IsComplete(self,assignment):
-        for key in assignment.iterkeys():
-            if len(assignment[key].domain) != 1:
-                return False
-        return True    
-    
-    def IsFailure(self,var):
-        for key in var:
-            pass
-    
-    
 def AC3(csp):
     queue = []
     
