@@ -1,5 +1,6 @@
 from Constraint import *
 from Consistent import *
+from random     import random
 ## Domain Value Ordering functions for Backtracking Search ##
 class ValueOrder:
     def __init__(self,csp,order):
@@ -12,16 +13,23 @@ class ValueOrder:
             self.function = self.randomOrder
         else:
             self.function = self.noOrder
-        
-    ## VALUE ORDERING FUNCTIONS (BELOW)
-    ## THESE SHOULD NEVER DIRECTLY BE CALLED OUTSIDE OF THE CLASS   
+   
+    ############################    
+    ## INTERNAL USE FUNCTIONS ##
+    ############################ 
     def noOrder(self, var, csp):
+        '''Returns the values as they are present in the domain'''
         return var.domain
     
     def randomOrder(self, var, csp):
-        return var.domain
+        '''Returns a random value order for the variable'''
+        return sorted(var.domain, key=lambda x: random())
     
     def leastConstrainingOrder(self, var, csp):
+        '''Computes and returns a list that is ordered based on
+           the number of values that will be ruled out if a certain
+           value is chosen....very high in time-complexity '''
+        # TODO: Fix issue where count is unaltered for each value
         value_pair = []
         variable = var.copy()
         for value in var.domain:
@@ -41,8 +49,9 @@ class ValueOrder:
             sorted_domain.append(v[0])
         return sorted_domain
     
-    ## UTILITY FUNCTIONS, 
-    ## THESE SHOULD ONLY BE CALLED OUTSIDE OF THE CLASS   
+    ############################
+    ## EXTERNAL USE FUNCTIONS ##
+    ############################
     def get(self, var, csp):
         return self.function(var, csp)
 
@@ -64,21 +73,32 @@ class NodeOrder:
             
         self.function(csp,True)
 
-    ## NODE ORDERING FUNCTIONS (BELOW)
-    ## THESE SHOULD NEVER DIRECTLY BE CALLED OUTSIDE OF THE CLASS  
+    ############################    
+    ## INTERNAL USE FUNCTIONS ##
+    ############################  
     def randomOrder(self,csp, create=False):
+        '''generate a randomly sorted queue through
+           the use of the random number generator'''
         if create:
             self.queue = []
             for key in csp.variables:
                 self.queue.append(csp.variables[key])
+        
+        self.queue = sorted(self.queue, key=lambda x: random())
 
     def noOrder(self,csp, create=False):
+        '''leave the queue as it is, collect all the variables
+           from the dictionary and then never touch the queue
+           again'''
         if create:
             self.queue = []
             for key in csp.variables:
                 self.queue.append(csp.variables[key])
 
     def minimumRemainingValuesOrder(self,csp, create=False):
+        '''this ordering returns the most constrained variable
+           which is interpreted as the value with the least amount
+           of domain values that is left in the queue.'''
         if create:
             self.queue = []
             for key in csp.variables:
@@ -87,6 +107,9 @@ class NodeOrder:
         self.queue = sorted(self.queue, key=lambda x: len(x.domain))
 
     def degreeOrder(self, csp, create=False):
+        '''sort the queue based upon the evaluate degree function value
+           which computes the number of constraints that a variable is
+           involved with that also still has unassigned values'''
         if create:
             self.queue = []
             for key in csp.variables:
@@ -94,16 +117,21 @@ class NodeOrder:
         
         self.queue = sorted(self.queue, key=lambda x: self.evaluateDegree(x, csp.constraints), reverse=True)
     
-    ## INTERNAL UTILITY FUNCTIONS,
-    ## THESE SHOULD ONLY BE USED WITHIN THE CLASS
+    ####################################    
+    ## INTERNAL USE UTILITY FUNCTIONS ##
+    #################################### 
     def evaluateDegree(self,variable,constraints):
+        '''evaluate how many constraints the variable is involved with 
+           that still have unassigned (length of domain > 1) variables
+           attached to them'''
         count = 0
         for constraint in constraints:
             count += constraint.unassigned(variable)
-        print("Unassigned Constraint Involvement: {0}".format(count))
         return count
-    ## UTILITY FUNCTIONS, 
-    ## THESE SHOULD ONLY BE CALLED OUTSIDE OF THE CLASS
+    
+    ############################
+    ## EXTERNAL USE FUNCTIONS ##
+    ############################
     def get(self,csp,index=0,reset=False):
         self.function(csp,reset)
         return self.queue[index]

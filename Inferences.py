@@ -25,9 +25,9 @@ class Inference:
         for constraint in csp.constraints:
             if constraint.contains(variable):
                 if isinstance(constraint, BinaryConstraint):
-                    consistent.arcConsistent(constraint, inference)
+                    consistent.AC(constraint, inference)
                 elif isinstance(constraint, GlobalConstraint):
-                    consistent.generalizedArcConsistent(constraint, inference)
+                    consistent.GAC(constraint, inference)
                 if inference == None:
                     return None
         return inference
@@ -40,9 +40,9 @@ class Inference:
         for constraint in csp.constraints:
             if constraint.contains(variable):
                 if isinstance(constraint, BinaryConstraint):
-                    consistent.arcConsistent(constraint, inference)
+                    consistent.AC(constraint, inference)
                 elif isinstance(constraint, GlobalConstraint):
-                    consistent.generalizedArcConsistent(constraint, inference)
+                    consistent.GAC(constraint, inference)
                 if inference == None:
                     return None
         return inference

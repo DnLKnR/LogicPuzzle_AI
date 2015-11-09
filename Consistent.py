@@ -55,7 +55,6 @@ class Consistent:
                 domains.append(v.domain)
                 new_domains.append([])
         args_list = list(product(*domains))
-        satisfy = False
         for args in args_list:
             arg = list(args)
             arg.insert(index, x)
@@ -123,7 +122,7 @@ class Consistent:
         
         return True
     
-    def generalizedArcConsistent(self, gc, inference):
+    def GAC(self, gc, inference):
         domains = []
         for v in gc.vars:
             domains.append(v.domain)
@@ -156,13 +155,13 @@ class Consistent:
                 return None
         return inference
     
-    def nodeConsistent(self, uc, inference):
+    def NC(self, uc, inference):
         domain = list(uc.var.domain)
         for x in domain:
             if ( False == uc.func(x) ):
                 uc.var.domain.remove(x)
     
-    def arcConsistent(self, bc, inference):
+    def AC(self, bc, inference):
         new_domain_x = []
         new_domain_y = []
         for x in bc.var1.domain:
