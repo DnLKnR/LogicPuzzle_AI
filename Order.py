@@ -23,18 +23,22 @@ class ValueOrder:
     
     def leastConstrainingOrder(self, var, csp):
         value_pair = []
+        variable = var.copy()
         for value in var.domain:
+            copy_csp = csp.copy()
+            copy_csp.variables[variable.name].domain = [value]
+            variable.domain                          = [value]
+            self.consistent.update(variable, copy_csp)
             count = 0
-            variable = ConstraintVar([value],var.name)
-            for constraint in csp.constraints:
-                if constraint.contains(variable):
-                    count += self.consistent.count(variable, constraint)
+            for key in csp.variables:
+                count += (len(csp.variables[key].domain) - len(copy_csp.variables[key].domain))
             value_pair.append([value,count])
+        print(value_pair)
         value_pair = sorted(value_pair,key=lambda x: x[1])
+        print(value_pair)
         sorted_domain = []
         for v in value_pair:
             sorted_domain.append(v[0])
-        #print(value_pair)
         return sorted_domain
     
     ## UTILITY FUNCTIONS, 
@@ -88,8 +92,16 @@ class NodeOrder:
             for key in csp.variables:
                 self.queue.append(csp.variables[key])
         
-        self.queue = sorted(self.queue, key=lambda x: len(x.neighbors))
+        self.queue = sorted(self.queue, key=lambda x: self.evaluateDegree(x, csp.constraints), reverse=True)
     
+    ## INTERNAL UTILITY FUNCTIONS,
+    ## THESE SHOULD ONLY BE USED WITHIN THE CLASS
+    def evaluateDegree(self,variable,constraints):
+        count = 0
+        for constraint in constraints:
+            count += constraint.unassigned(variable)
+        print("Unassigned Constraint Involvement: {0}".format(count))
+        return count
     ## UTILITY FUNCTIONS, 
     ## THESE SHOULD ONLY BE CALLED OUTSIDE OF THE CLASS
     def get(self,csp,index=0,reset=False):

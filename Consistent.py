@@ -8,47 +8,49 @@ class Consistent:
     
     def evaluate(self, variable, constraint):
         if isinstance(constraint, UnaryConstraint):
-            return self.isNodeConsistent(variable, constraint)
+            return self.isNC(variable, constraint)
             
         elif isinstance(constraint, BinaryConstraint):
-            return self.isArcConsistent(variable, constraint)
+            return self.isAC(variable, constraint)
             
         elif isinstance(constraint, GlobalConstraint):
-            return self.isGeneralizedArcConsistent(variable, constraint)
+            return self.isGAC(variable, constraint)
             
         else:
             print("Unrecognized instance passed to Consistent.consistent()")
             return None
     
-    def count(self, variable, constraint):
-        if isinstance(constraint, BinaryConstraint):
-            return self.countAC(variable, constraint)
-        elif isinstance(constraint, GlobalConstraint):
-            return self.countGAC(variable, constraint)
-        else:
-            return 0
+    def update(self, variable, csp):
+        ## THIS FUNCTION MODIFIES CSP #
+        for constraint in csp.constraints:
+            if constraint.contains(variable):
+                if isinstance(constraint, BinaryConstraint):
+                    self.execAC(variable, constraint)
+                elif isinstance(constraint, GlobalConstraint):
+                    self.execGAC(variable, constraint)
     
-    def countAC(self, variable, bc):
+    def execAC(self, variable, bc):
         reverse = (bc.var2.name == variable.name)
-        domain = list(bc.var2.domain)
+        var     = bc.var2
+        if reverse:
+            var = bc.var1
         x = variable.domain[0]
-        count = 0
-        
-        for y in domain:
+        new_domain = []
+        for y in var.domain:
             if (reverse and bc.func(y,x)) or ((not reverse) and bc.func(x,y)):
-                count += 1
-        
-        return count
+                if y not in new_domain:
+                    new_domain.append(y)
+        var.domain = new_domain
     
-    def countGAC(self, variable, gc):    
+    def execGAC(self, variable, gc):    
         index       = -1
         domain      = []
         domains     = []
         new_domains = []
+        x           = variable.domain[0]
         for i,v in enumerate(gc.vars):
             if variable.name == v.name:
                 index = i
-                x = variable.domain[0]
             else:
                 domains.append(v.domain)
                 new_domains.append([])
@@ -58,22 +60,20 @@ class Consistent:
             arg = list(args)
             arg.insert(index, x)
             if gc.func(*arg):
-                offset = 0
                 for i,v in enumerate(args):
                     if v not in new_domains[i]:
                         new_domains[i].append(v)
-        count = 0
+        new_domains.insert(index,[x])
         for i,new_domain in enumerate(new_domains):
-            count += (len(domains[i]) - len(new_domain))
-        return count
+            gc.vars[i].domain = new_domain
         
-    def isNodeConsistent(self, variable, uc):
+    def isNC(self, variable, uc):
         for x in uc.var.domain:
             if not uc.func(x):
                 return False
         return True
     
-    def isArcConsistent(self, variable, bc):
+    def isAC(self, variable, bc):
         reverse = (bc.var2.name == variable.name)
         if reverse:
             domain1 = list(bc.var2.domain)
@@ -93,7 +93,7 @@ class Consistent:
         
         return True
         
-    def isGeneralizedArcConsistent(self, variable, gc):
+    def isGAC(self, variable, gc):
         index       = -1
         domain      = []
         domains     = []

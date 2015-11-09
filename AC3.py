@@ -5,7 +5,6 @@ from Parse import PuzzleParser
 
 
 
-
 class AC3:
     def __init__(self):
         pass

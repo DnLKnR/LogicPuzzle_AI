@@ -58,6 +58,9 @@ class UnaryConstraint:
     
     def copy(self):
         return UnaryConstraint(self.var.copy(), self.func)
+    
+    def link(self,variables):
+        variables[self.var.name] = self.var
 
 class BinaryConstraint:
     # v1 and v2 should be of class ConstraintVar
@@ -81,13 +84,26 @@ class BinaryConstraint:
         else:
             return True
     
+    def unassigned(self, variable):
+        if variable.name == self.var1.name:
+            if len(self.var2.domain) > 1:
+                return 1
+        elif variable.name == self.var2.name:
+            if len(self.var1.domain) > 1:
+                return 1
+        return 0
+    
     def neighborize(self):
         self.var1.add(self.var2)
         self.var2.add(self.var1)
     
     def copy(self):
         return BinaryConstraint(self.var1.copy(), self.var2.copy(), self.func)
-
+        
+    def link(self,variables):
+        variables[self.var1.name] = self.var1
+        variables[self.var2.name] = self.var2
+        
 class GlobalConstraint:
     # vars should be a list of ConstraintVar objects
     # fn is the lambda expression for the constraint
@@ -95,6 +111,18 @@ class GlobalConstraint:
     def __init__(self, vars, fn):
         self.vars = vars
         self.func = fn
+    
+    def unassigned(self, variable):
+        unassigned  = False
+        exists      = False
+        for var in self.vars:
+            if var.name == variable.name:
+                exists = True
+            elif len(var.domain) > 1:
+                unassigned = True
+            if exists and unassigned:
+                return 1
+        return 0
     
     def contains(self, var):
         for v in self.vars:
@@ -125,7 +153,11 @@ class GlobalConstraint:
         for var in self.vars:
             copy_vars.append(var.copy())
         return GlobalConstraint(copy_vars, self.func)
-                        
+    
+    def link(self,variables):
+        for var in self.vars:
+            variables[var.name] = var
+        
 class ConstraintSatisfactionProblem:
     # This class contains the following variables:
     # input:       definition string,    ex. "+,basic+logic=pascal"
@@ -135,18 +167,17 @@ class ConstraintSatisfactionProblem:
     def __init__(self, variables=None, constraints=None):
         self.variables      = variables
         if self.variables == None:
-            self.variables = dict()
+            self.variables  = dict()
         self.constraints    = constraints
         if self.constraints == None:
             self.constraints = []
     
     def copy(self):
-        copy_variables = dict()
-        for key in self.variables:
-            copy_variables[key] = self.variables[key].copy()
+        copy_variables   = dict()
         copy_constraints = []
         for constraint in self.constraints:
             copy_constraints.append(constraint.copy())
+            copy_constraints[-1].link(copy_variables)
         return ConstraintSatisfactionProblem(copy_variables, copy_constraints)
     
     
