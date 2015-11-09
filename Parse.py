@@ -127,33 +127,37 @@ class PuzzleParser:
         csp     = ConstraintSatisfactionProblem()
         ## Input should be a single line, defining one problem ##
         input   = input.replace(' ','').replace('\r','').replace('\n','')
-        #Set up the variables
-        # read in the file with constraints for KenKen puzzles (1 line per puzzle)
-        lines = open('testCrypt.txt').readlines()
-        testLine = 4 # test this line in file
-        l = lines[testLine]
-        #remove white space
-        l=re.sub('[ ]','',l)
-        print('l ',l)
-    
-        # determine operator and remove, find "answer"
-        op = re.findall('^\W',l)
-        print('op ',op)
-        l = re.sub('^\W,','',l)
-        answer = re.findall('=\w+',l)
-        answer = re.sub('=','',answer[0])
-        print('l ',l,'answer ',answer)
-    
-        # start a dictionary of variables and a list of constraints
-        Cons = []
-    
-        vars = []
-        # separate values
-        words = re.findall('\w+',l)
-        for w in words:
-            letters = re.findall('\w',w)
-            for letter in letters:
-                if letter not in vars: vars.append(letter)
-        print('vars ',vars)
+        delim,  equation = input.split(',')
+        problem,solution = equation.split('=')
+        
+        variables = problem.split(delim)
+        characters = []
+        var_str = ''.join(variables) + solution
+        for char in var_str:
+            if char not in characters:
+                characters.append(char)
+        variables_str = [[]]
+        for char in equation:
+            if delim == char or char == '=':
+                variables_str.append([])
+            else:
+                variables_str[-1].append("str({0})".format(char))
+        string = []
+        for variable_strs in variables_str:
+            string.append("int({0})".format('+'.join(variable_strs)))
+        
+        
+        function = '=='.join([delim.join(string[:-1]),
+                              string[-1]])
+        print(function)
+        lambda_fn = "lambda {0}:{1}".format(','.join(characters),function)
+        cv = []
+        for char in characters:
+            domain = list(range(0,10))
+            cv.append(ConstraintVar(domain,char))
+            csp.variables[char] = cv[-1]
+        fn = eval(lambda_fn)
+        csp.constraints = [GlobalConstraint(cv,fn)]
+        return csp
     
     

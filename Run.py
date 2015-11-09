@@ -8,10 +8,12 @@ from Parse import *
 
 
 puzzleParser = PuzzleParser()
-f = open('Test/testCrossMath.txt','r')
+f = open('Test/testCrypt.txt','r')
 text = f.read()
 f.close()
 for puzzle in text.split('\n'):
-    csp = puzzleParser.setUpCrossMath(puzzle)
-    bts = BacktrackingSearch(csp,"mrv","lcv","fc")
+    if "#" in puzzle:
+        break
+    csp = puzzleParser.setUpCrypt(puzzle)
+    bts = BacktrackingSearch(csp,"d","lcv","fc")
     bts.run(csp)

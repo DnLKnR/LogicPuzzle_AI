@@ -20,7 +20,7 @@ class Consistent:
             print("Unrecognized instance passed to Consistent.consistent()")
             return None
     
-    def update(self, variable, csp):
+    def execute(self, variable, csp):
         ## THIS FUNCTION MODIFIES CSP #
         for constraint in csp.constraints:
             if constraint.contains(variable):

@@ -15,8 +15,9 @@ class Inference:
         else:
             self.function = self.noInference
     
-    ## INFERENCE FUNCTIONS (BELOW)
-    ## THESE SHOULD NEVER DIRECTLY BE CALLED OUTSIDE OF THE CLASS 
+    ############################    
+    ## INTERNAL USE FUNCTIONS ##
+    ############################  
     def forwardChecking(self, csp, variable):
         inference = dict()
         consistent = Consistent()
@@ -50,10 +51,15 @@ class Inference:
     def noInference(self, csp, var):
         return csp.variables
     
-    ## INTERNAL UTILITY FUNCTIONS ##
+    ####################################    
+    ## INTERNAL USE UTILITY FUNCTIONS ##
+    ####################################
+    
     def copy(self, variable):
         return ConstraintVar(list(variable.domain), variable.name)
-    ## UTILITY FUNCTIONS
-    ## THESE SHOULD ONLY BE CALLED OUTSIDE OF THE CLASS 
+    
+    ############################
+    ## EXTERNAL USE FUNCTIONS ##
+    ############################
     def get(self, csp, var):
         return self.function(csp, var)

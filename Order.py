@@ -31,17 +31,15 @@ class ValueOrder:
            value is chosen....very high in time-complexity '''
         # TODO: Fix issue where count is unaltered for each value
         value_pair = []
-        variable = var.copy()
         for value in var.domain:
             copy_csp = csp.copy()
-            copy_csp.variables[variable.name].domain = [value]
-            variable.domain                          = [value]
-            self.consistent.update(variable, copy_csp)
+            copy_csp.variables[var.name].domain = [value]
+            variable = copy_csp.variables[var.name]
+            self.consistent.execute(variable, copy_csp)
             count = 0
-            for key in csp.variables:
+            for key in copy_csp.variables:
                 count += (len(csp.variables[key].domain) - len(copy_csp.variables[key].domain))
             value_pair.append([value,count])
-        print(value_pair)
         value_pair = sorted(value_pair,key=lambda x: x[1])
         print(value_pair)
         sorted_domain = []
