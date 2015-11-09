@@ -32,12 +32,11 @@ class BacktrackingSearch:
             return csp.variables
         var = self.NodeOrder.pop(csp)
         for value in self.ValueOrder.get(var, csp):
-            previous                = dict()
-            previous[var.name]      = self.copy(csp.variables[var.name])
+            previous           = dict()
+            previous[var.name] = self.copy(csp.variables[var.name])
             csp.variables[var.name].domain = [value]
             if self.isConsistent(var, csp):
-                printDomains(csp.variables)
-                inferences = self.Inference.get(csp)
+                inferences = self.Inference.get(csp, var)
                 if inferences != None:
                     self.add(csp.variables, inferences, previous)
                     result = self.Backtrack(csp)
@@ -48,16 +47,16 @@ class BacktrackingSearch:
         return None
     
     def copy(self, variable):
-        return ConstraintVar(variable.domain, variable.name)
+        return ConstraintVar(list(variable.domain), variable.name)
     
     def revert(self, variables, previous):
         for key in previous:
-            variables[key].domain = previous[key].domain
+            variables[key].domain = list(previous[key].domain)
             
     def add(self, variables, inferences, previous):
         for key in inferences:
             previous[key]           = self.copy(variables[key])
-            variables[key].domain   = inferences[key].domain
+            variables[key].domain   = list(inferences[key].domain)
         
     def isConsistent(self, variable, csp):
         for constraint in csp.constraints:

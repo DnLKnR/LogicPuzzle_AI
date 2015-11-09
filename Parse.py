@@ -1,5 +1,21 @@
 from Constraint import *
+import re
+import operator
 
+# Thanks StackOverflow: http://stackoverflow.com/questions/1740726/python-turn-string-into-operator
+ops = {'+': operator.add,
+       '-': operator.sub,
+       '*': operator.mul,
+       '/': operator.truediv,
+       '==': operator.eq,
+       '!=': operator.ne,
+       '<': operator.lt,
+       '<=': operator.le,
+       '>': operator.gt,
+       '>=': operator.ge,
+       'abs': operator.abs,
+       '^': operator.pow
+       }
 
 
 def printDomains( vars, n=3 ):
@@ -28,7 +44,8 @@ class PuzzleParser:
     
     def getVars(self,equation):
         special_char = "!@#$%^&*()_+-=[]\\{}|;\':\",./<>? "
-        start,end,vars,is_special = 0, 0, [], False
+        start,end,is_special = 0, 0, False
+        vars      = []
         length = len(equation)
         while end <= length:
             #Find the start index of a variable
@@ -46,6 +63,14 @@ class PuzzleParser:
         
         return vars
     
+    def getOps(self,equation):
+        operators = ["+","-","*","/","^"]
+        ops_list  = []
+        for char in equation:
+            if char in operators:
+                ops_list.append(char)
+        return ops_list
+    
     def setUpCrossMath(self,input):
         ## Instantiate the CSP object ##
         csp     = ConstraintSatisfactionProblem()
@@ -57,14 +82,22 @@ class PuzzleParser:
         #Set up the variables and constraints
         for equation in equations:
             problem, solution = equation.split('=')
-            vars = self.getVars(problem)
+            parens  = ("(" in problem)
+            vars    = self.getVars(problem)
+            opers   = self.getOps(problem)
             for var in vars:
                 if var not in variables:
                     variables.append(var)
             vars_str = ','.join(vars)
-            # print(vars_str)
-            relation = equation.replace('=','==')
-            function = "lambda {0}:{1}".format(vars_str, relation)
+            ## If the problem has parenthesis, follow their order of operation
+            if parens:
+                function = "lambda {0}:{1}=={2}".format(vars_str,problem,solution)
+            ## Otherwise follow game rules, make sure to ignore order of operation 
+            ## and go left to right
+            else:
+                problem_1 = opers[0].join(vars[:2])
+                problem_2 = opers[1] + vars[2]
+                function = "lambda {0}:({1}){2}=={3}".format(vars_str,problem_1,problem_2,solution)
             constraints.append([vars,function])
             
         #Set up the domains
@@ -81,14 +114,12 @@ class PuzzleParser:
             csp.constraints.append(gc)
         
         self.allDiff(csp)
-        printDomains(csp.variables)
         print("")
+        print("Input: {0}".format(input))
+        print("Starting Configuration:")
+        printDomains(csp.variables)
         
         return csp
-    
-    #print(csp.input)
-    #print(printDomains(csp.variables))
-    #print(csp.constraints)
     
     def setUpCrypt(self,input):
         ## Instantiate the CSP object ##
@@ -96,21 +127,32 @@ class PuzzleParser:
         ## Input should be a single line, defining one problem ##
         input   = input.replace(' ','').replace('\r','').replace('\n','')
         #Set up the variables
-        delim,  equation = csp.input.split(',')
-        vars,   solution = problems.split('=')
-        varNames = vars.split(delim)
-        for var in varNames:
-            csp.variables[var] = ConstraintVar(['Baseball','Tennis','Basketball','Soccer'],var)
-        
-        # establish the allDiff constraint for each column and each row
-        # for AC3, all constraints would be added to the queue 
-        # lambda t,o,o,l,
-        # for example, for rows A,B,C, generate constraints A1!=A2!=A3, B1!=B2...   
-        for r in varNames:
-            aRow = []
-            for k in variables.keys():
-                if ( str(k).startswith(r) ):
-            #accumulate all ConstraintVars contained in row 'r'
-                    aRow.append( variables[k] )
-        #add the allDiff constraints among those row elements
-            allDiff( csp.constraints, aRow )
+        # read in the file with constraints for KenKen puzzles (1 line per puzzle)
+        lines = open('testCrypt.txt').readlines()
+        testLine = 4 # test this line in file
+        l = lines[testLine]
+        #remove white space
+        l=re.sub('[ ]','',l)
+        print('l ',l)
+    
+        # determine operator and remove, find "answer"
+        op = re.findall('^\W',l)
+        print('op ',op)
+        l = re.sub('^\W,','',l)
+        answer = re.findall('=\w+',l)
+        answer = re.sub('=','',answer[0])
+        print('l ',l,'answer ',answer)
+    
+        # start a dictionary of variables and a list of constraints
+        Cons = []
+    
+        vars = []
+        # separate values
+        words = re.findall('\w+',l)
+        for w in words:
+            letters = re.findall('\w',w)
+            for letter in letters:
+                if letter not in vars: vars.append(letter)
+        print('vars ',vars)
+    
+    

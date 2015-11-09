@@ -107,6 +107,10 @@ class ConstraintSatisfactionProblem:
     # variables:   a set of variables,   ex. ['a','b','c','d','e','f','g','h',....]
     # domains:     a set of domains,     ex. {'a' : [1..26], 'b' : [1..26],....}
     # constraints: a set of constraints, ex. [Constraint Object,...]
-    def __init__(self, variables=dict(), constraints=[]):
+    def __init__(self, variables=None, constraints=None):
         self.variables      = variables
+        if self.variables == None:
+            self.variables = dict()
         self.constraints    = constraints
+        if self.constraints == None:
+            self.constraints = []
