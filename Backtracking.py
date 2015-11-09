@@ -7,8 +7,9 @@ import functools
 from functools import reduce
 
 class BacktrackingSearch:
-    def __init__(self,csp,NodeOrdering,ValueOrdering,InferenceName):
+    def __init__(self,csp,NodeOrdering,ValueOrdering,InferenceName, sort=True):
         self.csp        = csp
+        if sort: csp.sort()
         self.NodeOrder  = NodeOrder(self.csp, NodeOrdering)
         self.ValueOrder = ValueOrder(self.csp, ValueOrdering)
         self.Inference  = Inference(self.csp, InferenceName)
@@ -30,14 +31,11 @@ class BacktrackingSearch:
         if self.isComplete(csp):
             return csp.variables
         var = self.NodeOrder.pop(csp)
-        #print("flag 1")
         for value in self.ValueOrder.get(var, csp):
             previous = dict()
             previous[var.name] = csp.variables[var.name].copy()
             csp.variables[var.name].domain = [value]
-            #print("flag 2")
             if self.Consistent.evaluate(var, csp):
-                #print("flag: var is consistent")
                 inferences = self.Inference.get(csp, var)
                 if inferences != None:
                     self.add(csp.variables, inferences, previous)
@@ -52,14 +50,14 @@ class BacktrackingSearch:
         '''undo the changes made to the variables list by re-adding
            the values that are stored in the previous dictionary'''
         for key in previous:
-            variables[key].domain = deepcopy(previous[key].domain)
+            variables[key].domain = list(previous[key].domain)
             
     def add(self, variables, inferences, previous):
         '''add the inferences onto the variables dictionary and store
            the old values in previous in case they need to be undone'''
         for key in inferences:
             previous[key]           = variables[key].copy()
-            variables[key].domain   = deepcopy(inferences[key].domain)
+            variables[key].domain   = list(inferences[key].domain)
     
     def isComplete(self, csp):
         '''check through all the constraints in the constraint satisfaction

@@ -35,10 +35,13 @@ class PuzzleParser:
         # constraints is a preconstructed list. v is a list of ConstraintVar instances.
         # call example: allDiff( constraints, [A1,A2,A3] ) will generate BinaryConstraint instances for [[A1,A2],[A2,A1],[A1,A3] ...
         fn = lambda x,y: x != y
+        #created = []
         for key1 in csp.variables:
             for key2 in csp.variables:
-                if key1 != key2:
+                if key1 != key2: #and [key2,key1] not in created:
                     csp.constraints.append(BinaryConstraint(csp.variables[key1],csp.variables[key2],fn))
+                    #created.append([key1,key2])
+                    self.printConstraint([key1,key2], "lambda x,y: x != y")
     
     def getVars(self,equation):
         special_char = "!@#$%^&*()_+-=[]\\{}|;\':\",./<>? "
@@ -120,7 +123,6 @@ class PuzzleParser:
         
         return csp
     
-    
     def convertVariable(self,variable,number_base):
         ## Convert variable to something that can be used in an equation
         ## ex. send => ((s * 1000) + (e * 100) + (n * 10) + (d * 1))
@@ -150,11 +152,21 @@ class PuzzleParser:
             
     def createConstraints(self,equation_parts,delim,number_base,csp):
         max_length = len(max(equation_parts[:-1],key=lambda x: len(x))) + 1
+        #Make all Unary Constraints (since leading numbers cannot be 0)
+        unary_var_str = []
+        for part in equation_parts:
+            if len(part) > 1 and part[0] not in unary_var_str:
+                var = csp.variables[part[0]]
+                fn  = lambda x: x != 0
+                csp.constraints.append(UnaryConstraint(var,fn))
+                self.printConstraint(part[0], "lambda x: x != 0")
+                unary_var_str.append(part[0])
+        #Make all Global Constraints, except for the final one
         for i in range(1,max_length):
             equation_arr = []
             for equation_part in equation_parts:
                 equation_arr.append(self.convertVariable(equation_part[-i:],number_base))
-            equation_str = "{0}=={1} % {2}".format(delim.join(equation_arr[:-1]),equation_arr[-1],number_base ** i)
+            equation_str = "({0}) % {2} == ({1}) % {2}".format(delim.join(equation_arr[:-1]),equation_arr[-1],number_base ** i)
             #print(equation_str)
             parameters = self.getParameters(equation_str)
             param_str  = ','.join(self.getParameters(equation_str))
@@ -164,6 +176,7 @@ class PuzzleParser:
             vars = self.gatherVariables(parameters,csp)
             fn   = eval(lambda_fn)
             csp.constraints.append(GlobalConstraint(vars,fn))
+            self.printConstraint(parameters, lambda_fn)
     
     def gatherVariables(self,varNames,csp):
         variables = []
@@ -210,14 +223,23 @@ class PuzzleParser:
         
         param_str  = ','.join(parameters)
         lambda_fn = "lambda {0}:{1}".format(param_str,function)
+        #print(lambda_fn)
         fn = eval(lambda_fn)
         
         vars = self.gatherVariables(parameters, csp)
         csp.constraints.append(GlobalConstraint(vars,fn))
+        self.printConstraint(parameters, lambda_fn)
         print("Input: {0}".format(input))
         print("Starting Configuration:")
         printDomains(csp.variables)
         print("")
         return csp
+    
+    def printConstraint(self,variables,lambda_str):
+        print("Constraint Values:")
+        print("\tVariables:\t\t{0}".format(', '.join(variables)))
+        print("\tLambda Function:\t{0}".format(lambda_str))
+        
+        
     
     

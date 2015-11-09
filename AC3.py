@@ -22,72 +22,33 @@ class AC3:
     def run(self,csp):
         queue = []
         for constraint in csp.constraints:
-            if isinstance(constraint, BinaryConstraint):
-                queue.append(constraint)
-            elif isinstance(constraint, GlobalConstraint):
-                queue.append(constraint)
+            constraint.neighborize()
+            queue.append(constraint)
         self.AC3(csp,queue)
         self.printDomains(csp.variables)
     
     def AC3(self,csp,queue):
         while len(queue) > 0:
             constraint = queue.pop(0)
+            self.printDomains(csp.variables)
             if self.Revise(csp, constraint):
                 if self.isEmpty(constraint):
                     return False
-                for variable in self.getNeighbors(constraint,csp):
-                    queue.extend(self.getConstraints(variable,csp))
+                for neighbor in self.getNeighbors(constraint,csp):
+                    queue.extend(self.getConstraints(neighbor,csp))
         return True
-    
-    def isEmpty(self,constraint):
-        if isinstance(constraint, BinaryConstraint):
-            for var in [constraint.var1, constraint.var2]:
-                if len(var.domain) == 0:
-                    return True
-            return False
-        elif isinstance(constraint, GlobalConstraint):
-            for var in constraint.vars:
-                if len(var.domain) == 0:
-                    return True
-            return False
-    
-    def getNeighbors(self,constraint,csp):
-        constraint.neighborize()
-        if isinstance(constraint, BinaryConstraint):
-            return list(constraint.var1.neighbors + constraint.var2.neighbors)
-        elif isinstance(constraint, GlobalConstraint):
-            all_vars = []
-            for var in constraint.vars:
-                for neighbor in var.neighbors:
-                    if neighbor not in all_vars:
-                        all_vars.append(neighbor)
-            return all_vars
-    
-    def getConstraints(self,variable,csp):
-        constraints = []
-        for constraint in csp.constraints:
-            if constraint.contains(variable):
-                constraints.append(constraint)
-        return constraints
-                
-                
     
     def Revise(self, csp, constraint):
         if isinstance(constraint, BinaryConstraint):
             return self.ReviseAC(csp, constraint)
         elif isinstance(constraint, GlobalConstraint):
             return self.ReviseGAC(csp, constraint)
+        return False
             
         
     def ReviseAC(self, csp, bc):
-        # The Revise() function from AC-3, which removes elements from var1 domain, if not arc consistent
-        # A single BinaryConstraint instance is passed in to this function. 
-        # MISSSING the part about returning sat to determine if constraints need to be added to the queue
-        
-        # copy domains for use with iteration (they might change inside the for loops)
         dom1 = list(bc.var1.domain)
         dom2 = list(bc.var2.domain)
-        
         revised = False
         # for each value in the domain of variable 1
         for x in dom1:
@@ -104,39 +65,63 @@ class AC3:
         return revised
     
     def ReviseGAC(self, csp, gc):
-        domains     = []
-        new_domains = []
-        revised     = False
-        for v in gc.vars:
-            domains.append(v.domain)
-        last = len(domains) - 1
-        for index,variable in enumerate(gc.vars):
-            domain  = domains[index]
-            new_domain = []
-            others  = []
-            if index == 0:
-                others = domains[1:]
-            elif index == last:
-                others = domains[:-1]
-            else:
-                others = domains[:index] + domains[index + 1:]
-            args_list = list(product(*others))
-            for x in domain:
-                satisfy = False
-                for args in args_list:
-                    arg_list = list(args)
-                    arg_list.insert(index, x)
-                    if gc.func(*arg_list):
-                        satisfy = True
-                        break
-                if satisfy:
-                    new_domain.append(x)
-                if not satisfy:
-                    revised = True
-            new_domains.append(new_domain)
+        revised,chosen = False,False
+        index          = -1
+        domain         = []
+        domains        = []
         for i,v in enumerate(gc.vars):
-            v.domain = new_domains[i]
+            if len(v.domain) > 1 and not chosen:
+                index = i
+                domain = list(v.domain)
+                chosen = True
+            domains.append(v.domain)
+        for x in domain:
+            satisfy = False
+            domains[index] = [x]
+            print(domains[index])
+            for args in product(*domains):
+                if gc.func(*args):
+                    satisfy = True
+                    break
+            if not satisfy:
+                gc.vars[index].domain.remove(x)
+                revised = True
         return revised
+        
+    def isEmpty(self,constraint):
+        if isinstance(constraint, BinaryConstraint):
+            for var in [constraint.var1, constraint.var2]:
+                if len(var.domain) == 0:
+                    return True
+        elif isinstance(constraint, GlobalConstraint):
+            for var in constraint.vars:
+                if len(var.domain) == 0:
+                    return True
+        return False
+    
+    def getNeighbors(self,constraint,csp):
+        if isinstance(constraint, BinaryConstraint):
+            return list(constraint.var1.neighbors)
+        elif isinstance(constraint, GlobalConstraint):
+            all_vars = []
+            for var in constraint.vars:
+                for neighbor in var.neighbors:
+                    if neighbor not in all_vars:
+                        all_vars.append(neighbor)
+            return all_vars
+    
+    def getConstraints(self,variable,csp):
+        constraints = []
+        for constraint in csp.constraints:
+            if isinstance(constraint, BinaryConstraint):
+                if constraint.var2.name == variable.name:
+                    constraints.append(constraint)
+            elif isinstance(constraint, GlobalConstraint):
+                if constraint.constains(variable):
+                    constraints.append(constraint)
+        return constraints
+    
+    
         
     def printDomains(self, vars, n=3 ):
         count = 0

@@ -54,7 +54,7 @@ class UnaryConstraint:
             return True
     
     def neighborize(self):
-        # Awww :(
+        #DO NOTHING
         pass
     
     def copy(self):
@@ -158,7 +158,7 @@ class GlobalConstraint:
     def link(self,variables):
         for var in self.vars:
             var = variables[var.name]
-        
+
 class ConstraintSatisfactionProblem:
     # This class contains the following variables:
     # input:       definition string,    ex. "+,basic+logic=pascal"
@@ -183,6 +183,17 @@ class ConstraintSatisfactionProblem:
             copy_constraint.link(copy_variables)
             copy_constraints.append(copy_constraint)
         return ConstraintSatisfactionProblem(copy_variables, copy_constraints)
+    
+    def sort(self):
+        sorted(self.constraints,key=lambda x: self.rank(x))
+        
+    def rank(self,constraint):
+        if isinstance(constraint, UnaryConstraint):
+            return 1
+        elif isinstance(constraint, BinaryConstraint):
+            return 2
+        else:
+            return len(constraint.vars)
     
     
     

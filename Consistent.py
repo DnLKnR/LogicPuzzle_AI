@@ -1,29 +1,68 @@
 from Constraint import *
 from itertools  import product
-   
+from time import time
    
 class Consistent:
     def __init__(self):
         pass
     
-    def evaluate(self, variable, csp):
+    
+    ### Probably delete this function
+    def infer(self, variable, inference, csp):
         for constraint in csp.constraints:
+            #print("evaluating inferences...")
+            if isinstance(constraint, BinaryConstraint) and constraint.contains(variable):
+                #if isinstance(constraint, UnaryConstraint):
+                #    print("starting Node Consistency")
+                #    start = time()
+                #    inference = self.inferNC(variable, constraint, inference)
+                #    end   = time()
+                #    print("completed Node Consistency in {0}".format(end-start))
+                #print("evaluating inferences that contain variable...")
+                #if :
+                print("starting Arc Consistency")
+                start = time()
+                inference = self.inferAC(variable, constraint, inference)
+                end   = time()
+                print("completed Arc Consistency in {0}".format(end-start))
+                #elif isinstance(constraint, GlobalConstraint):
+                #    print("starting Generalized Arc Consistency")
+                #    start = time()
+                #    inference = self.inferGAC(variable, constraint, inference)
+                #    end   = time()
+                #    print("completed Generalized Arc Consistency in {0}".format(end-start))
+                if inference == None:
+                    print("...result False")
+                    return None
+        print("...result True")
+        return inference
+    
+    def evaluate(self, variable, csp):
+        #print(len(csp.constraints))
+        for constraint in csp.constraints:
+            #print("evaluating...")
             if constraint.contains(variable):
                 if isinstance(constraint, UnaryConstraint):
+                    print("evaluating Node Consistency",end="")
                     if not self.isNC(variable, constraint):
+                        print("...result: false")
                         return False
-                    
+                    print("...result: true")
                 elif isinstance(constraint, BinaryConstraint):
+                    print("evaluating Arc Consistency",end="")
                     if not self.isAC(variable, constraint):
+                        print("...result: false")
                         return False
-                    
+                    print("...result: true")
                 elif isinstance(constraint, GlobalConstraint):
+                    print("evaluating Generalized Arc Consistency",end="")
                     if not self.isGAC(variable, constraint):
+                        print("...result: false")
                         return False
-                    
+                    print("...result: true")
                 else:
                     print("Unrecognized instance passed to Consistent.consistent()")
-                    return False
+                    return True
         return True
     
     def execute(self, variable, csp):
@@ -34,6 +73,16 @@ class Consistent:
                     self.execAC(variable, constraint)
                 elif isinstance(constraint, GlobalConstraint):
                     self.execGAC(variable, constraint)
+    
+    def execNC(self, variable, nc):
+        domain = list(uc.var.domain)
+        for x in domain[::-1]:
+            if (uc.func(x) == False):
+                domain.remove(x)
+        if len(domain):
+            inference[variable.name] = ConstraintVar(domain, variable.name)
+            return inference
+        return None
     
     def execAC(self, variable, bc):
         reverse = (bc.var2.name == variable.name)
@@ -60,12 +109,12 @@ class Consistent:
             else:
                 domains.append(v.domain)
                 new_domains.append([])
-        args_list = list(product(*domains))
-        for args in args_list:
-            all_args = list(args)
-            all_args.insert(index, x)
-            if gc.func(*all_args):
-                for i,v in enumerate(args):
+        #args_list = list(product(*domains))
+        for arg in product(*domains):
+            args = list(arg)
+            args.insert(index, x)
+            if gc.func(*args):
+                for i,v in enumerate(arg):
                     if v not in new_domains[i]:
                         new_domains[i].append(v)
         new_domains.insert(index,[x])
@@ -108,16 +157,11 @@ class Consistent:
                 domain = list(gc.vars[i].domain)
             else:
                 domains.append(v.domain)
-        # Product takes in a list of lists and returns all
-        # possible forward combinations of one element in each list
-        # ex. [[1,2,3],[2,3,4],[4,5,6]] => [(1,2,4),(1,2,5),...(3,4,6)]
-        args_list = list(product(*domains))
-        # Loop through all arg combinations, and find ones where the first
-        # variable cannot satisfy the defined function and remove it 
-        # from the domain of the first variable
+                
+        args_iter = product(*domains)
         for x in domain:
             satisfy = False
-            for args in args_list:
+            for args in args_iter:
                 args = list(args)
                 args.insert(index, x)
                 if gc.func(*args):
@@ -128,46 +172,88 @@ class Consistent:
         
         return True
     
-    def GAC(self, gc, inference):
-        domains = []
+    def isKC(self, variable, gc):
+        ## Gather the domains of all the variables and 
+        ## instantiate the array that will contain the
+        ## updated domains based on the global constraint
+        domains         = []
         for v in gc.vars:
             domains.append(v.domain)
-        last = len(domains) - 1
-        for index,variable in enumerate(gc.vars):
-            domain  = domains[index]
-            new_domain = []
-            others  = []
-            if index == 0:
-                others = domains[1:]
-            elif index == last:
-                others = domains[:-1]
+        for args in product(*domains):
+            if not gc.func(*args):
+                return False
+        return True
+    
+    def inferGAC(self, variable, gc, inference):
+        index       = -1
+        domain      = []
+        domains     = []
+        new_domains = []
+        x           = (variable.domain)[0]
+        for i,v in enumerate(gc.vars):
+            if variable.name == v.name:
+                index = i
             else:
-                others = domains[:index] + domains[index + 1:]
-                
-            args_list = list(product(*others))
-            for x in domain:
-                satisfy = False
-                for args in args_list:
-                    arg_list = list(args)
-                    arg_list.insert(index, x)
-                    if gc.func(*arg_list):
-                        satisfy = True
-                        break
-                if satisfy:
-                    new_domain.append(x)
-            if len(domain):
-                inference[variable.name].domain = domain
+                domains.append(v.domain)
+                new_domains.append([])
+        #args_list = list(product(*domains))
+        for args in product(*domains):
+            all_args = list(args)
+            all_args.insert(index, x)
+            if gc.func(*all_args):
+                for i,v in enumerate(args):
+                    if v not in new_domains[i]:
+                        new_domains[i].append(v)
+        new_domains.insert(index,[x])
+        for i,new_domain in enumerate(new_domains):
+            if len(new_domain) > 0:
+                if len(new_domain) < len(gc.vars[i].domain):
+                    inference[gc.vars[i].name] = ConstraintVar(new_domain, gc.vars[i].name)
             else:
                 return None
+        
         return inference
     
-    def NC(self, uc, inference):
+    def inferKC(self, variable, gc, inference):
+        ## Gather the domains of all the variables and 
+        ## instantiate the array that will contain the
+        ## updated domains based on the global constraint
+        domains         = []
+        new_domains     = []
+        for v in gc.vars:
+            domains.append(v.domain)
+            new_domains.append([])
+        # Product takes in a list of lists and returns all
+        # possible forward combinations of one element in each list
+        # ex. [[1,2,3],[2,3,4],[4,5,6]] => [(1,2,4),(1,2,5),...(3,4,6)]
+        #args_list = list(product(*domains))
+        # Loop through all arg combinations, and find ones that satisfy
+        # the global constraint function.  Update the new domains with
+        # their respective values.
+        for args in product(*domains):
+            if gc.func(*args):
+                for i,v in enumerate(args):
+                    if v not in new_domains[i]:
+                        new_domains[i].append(v)
+        ## Note: we only care to update k-1 domains. The last domain remains
+        ## unaltered per the definition of K-consistency in the book
+        for i,new_domain in enumerate(new_domains[:-1]):
+            if len(new_domain) == 0:
+                return None
+            inference[gc.vars[i].name] = ConstraintVar(new_domain, gc.vars[i].name)
+        return inference  
+            
+    def inferNC(self, variable, uc, inference):
         domain = list(uc.var.domain)
-        for x in domain:
-            if ( False == uc.func(x) ):
-                uc.var.domain.remove(x)
+        for x in domain[::-1]:
+            if (uc.func(x) == False):
+                domain.remove(x)
+        if len(domain):
+            inference[variable.name] = ConstraintVar(domain, variable.name)
+            return inference
+        return None
     
-    def AC(self, bc, inference):
+    def inferAC(self, variable, bc, inference):
         new_domain_x = []
         new_domain_y = []
         for x in bc.var1.domain:
@@ -179,9 +265,11 @@ class Consistent:
                         new_domain_y.append(y)
             if satisfy:
                 new_domain_x.append(x)
-        if len(new_domain_x) and len(new_domain_y):
-            inference[bc.var1.name].domain = new_domain_x
-            inference[bc.var2.name].domain = new_domain_y
+        if len(new_domain_x) and bc.var1.name != variable.name:
+            inference[bc.var1.name] = ConstraintVar(new_domain_x, variable.name)
+            return inference
+        elif len(new_domain_y) and bc.var2.name != variable.name:
+            inference[bc.var2.name] = ConstraintVar(new_domain_y, variable.name)
             return inference
         else:
             return None
@@ -220,11 +308,10 @@ class Consistent:
         # Product takes in a list of lists and returns all
         # possible forward combinations of one element in each list
         # ex. [[1,2,3],[2,3,4],[4,5,6]] => [(1,2,4),(1,2,5),...(3,4,6)]
-        args_list = list(product(*domains))
         # Loop through all arg combinations, and find ones that satisfy
         # the global constraint function.  Update the new domains with
         # their respective values.
-        for args in args_list:
+        for args in product(*domains):
             if gc.fn(*args):
                 for i,v in enumerate(args):
                     if v not in new_domains[i]:
