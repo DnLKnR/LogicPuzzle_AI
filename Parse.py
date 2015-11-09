@@ -38,9 +38,7 @@ class PuzzleParser:
         for key1 in csp.variables:
             for key2 in csp.variables:
                 if key1 != key2:
-                    csp.constraints.append(BinaryConstraint(csp.variables[key1], 
-                                                            csp.variables[key2], 
-                                                            fn))
+                    csp.constraints.append(BinaryConstraint(csp.variables[key1],csp.variables[key2],fn))
     
     def getVars(self,equation):
         special_char = "!@#$%^&*()_+-=[]\\{}|;\':\",./<>? "
@@ -122,42 +120,107 @@ class PuzzleParser:
         
         return csp
     
+    
+    def convertVariable(self,variable,number_base):
+        ## Convert variable to something that can be used in an equation
+        ## ex. send => ((s * 1000) + (e * 100) + (n * 10) + (d * 1))
+        length = len(variable)
+        parts  = []
+        for i,char in enumerate(reversed(variable)):
+            multiplier = number_base ** i
+            string     = "({0} * {1})".format(char,multiplier)
+            parts.insert(0,string)
+        equation = "({0})".format('+'.join(parts))
+        if len(parts) == 1:
+            equation = "{0}".format('+'.join(parts))
+        return equation
+    
+    def getParameters(self,equation):
+        parameters = []
+        alpha = "abcdefghijklmnopqrstuvwxyz"
+        for char in equation:
+            if char in alpha and char not in parameters:
+                parameters.append(char)
+        return parameters
+    
+    def createVariables(self,equation,csp,domain):
+        variables = self.getParameters(equation)
+        for variable in variables:
+            csp.variables[variable] = ConstraintVar(domain,variable)
+            
+    def createConstraints(self,equation_parts,delim,number_base,csp):
+        modulo_mult = 1
+        places = []
+        max_length = len(max(equation_parts[:-1],key=lambda x: len(x))) + 1
+        for i in range(1,max_length):
+            equation_arr = []
+            for equation_part in equation_parts:
+                equation_arr.append(self.convertVariable(equation_part[-i:],number_base))
+            equation_str = "{0}=={1} % {2}".format(delim.join(equation_arr[:-1]),equation_arr[-1],number_base ** i)
+            #print(equation_str)
+            parameters = self.getParameters(equation_str)
+            param_str  = ','.join(self.getParameters(equation_str))
+            lambda_fn  = "lambda {0}:{1}".format(param_str,equation_str)
+            #print("Equation Part:")
+            #print(lambda_fn)
+            vars = self.gatherVariables(parameters,csp)
+            fn   = eval(lambda_fn)
+            csp.constraints.append(GlobalConstraint(vars,fn))
+    
+    def gatherVariables(self,varNames,csp):
+        variables = []
+        for varName in varNames:
+            variables.append(csp.variables[varName])
+        return variables
+        
     def setUpCrypt(self,input):
         ## Instantiate the CSP object ##
         csp     = ConstraintSatisfactionProblem()
         ## Input should be a single line, defining one problem ##
-        input   = input.replace(' ','').replace('\r','').replace('\n','')
+        input   = input.replace(' ','').replace('\r','').replace('\n','').lower()
         delim,  equation = input.split(',')
         problem,solution = equation.split('=')
-        
+        number_base     = 10
+        domain          = list(range(number_base))
+        ## Create the variables in the constraint satisfaction problem
+        self.createVariables(equation,csp,domain)
         variables = problem.split(delim)
-        characters = []
-        var_str = ''.join(variables) + solution
-        for char in var_str:
-            if char not in characters:
-                characters.append(char)
+        self.createConstraints(variables + [solution], delim, number_base, csp)
+        decimal_place = 0
+        placers_str   = [[]]
         variables_str = [[]]
-        for char in equation:
+        # Reverse the string and evaluate it (for decimal purposes)
+        for char in reversed(equation):
             if delim == char or char == '=':
                 variables_str.append([])
+                decimal_place = 0
             else:
-                variables_str[-1].append("str({0})".format(char))
+                variables_str[-1].append("({0}*{1})".format(char,number_base ** decimal_place))
+                decimal_place += 1
+        # Reverse all the items back to normalize again
+        for i,str in enumerate(variables_str):
+            variables_str[i] = reversed(str)
+        variables_str = reversed(variables_str)
         string = []
         for variable_strs in variables_str:
-            string.append("int({0})".format('+'.join(variable_strs)))
+            string.append("({0})".format('+'.join(variable_strs)))
+        function = '=='.join([delim.join(string[:-1]),string[-1]])
         
+        #print(function)
+        parameters = self.getParameters(function)
         
-        function = '=='.join([delim.join(string[:-1]),
-                              string[-1]])
-        print(function)
-        lambda_fn = "lambda {0}:{1}".format(','.join(characters),function)
-        cv = []
-        for char in characters:
-            domain = list(range(0,10))
-            cv.append(ConstraintVar(domain,char))
-            csp.variables[char] = cv[-1]
+        param_str  = ','.join(parameters)
+        lambda_fn = "lambda {0}:{1}".format(param_str,function)
         fn = eval(lambda_fn)
-        csp.constraints = [GlobalConstraint(cv,fn)]
+        
+        vars = self.gatherVariables(parameters, csp)
+        csp.constraints.append(GlobalConstraint(vars,fn))
+        self.allDiff(csp)
+        print("Input: {0}".format(input))
+        print("Starting Configuration:")
+        print("")
+        printDomains(csp.variables)
+        print("")
         return csp
     
     

@@ -15,5 +15,5 @@ for puzzle in text.split('\n'):
     if "#" in puzzle:
         break
     csp = puzzleParser.setUpCrypt(puzzle)
-    bts = BacktrackingSearch(csp,"d","lcv","fc")
+    bts = BacktrackingSearch(csp,"mrv","no","fc")
     bts.run(csp)
