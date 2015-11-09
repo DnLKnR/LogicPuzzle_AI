@@ -6,19 +6,25 @@ class Consistent:
     def __init__(self):
         pass
     
-    def evaluate(self, variable, constraint):
-        if isinstance(constraint, UnaryConstraint):
-            return self.isNC(variable, constraint)
-            
-        elif isinstance(constraint, BinaryConstraint):
-            return self.isAC(variable, constraint)
-            
-        elif isinstance(constraint, GlobalConstraint):
-            return self.isGAC(variable, constraint)
-            
-        else:
-            print("Unrecognized instance passed to Consistent.consistent()")
-            return None
+    def evaluate(self, variable, csp):
+        for constraint in csp.constraints:
+            if constraint.contains(variable):
+                if isinstance(constraint, UnaryConstraint):
+                    if not self.isNC(variable, constraint):
+                        return False
+                    
+                elif isinstance(constraint, BinaryConstraint):
+                    if not self.isAC(variable, constraint):
+                        return False
+                    
+                elif isinstance(constraint, GlobalConstraint):
+                    if not self.isGAC(variable, constraint):
+                        return False
+                    
+                else:
+                    print("Unrecognized instance passed to Consistent.consistent()")
+                    return False
+        return True
     
     def execute(self, variable, csp):
         ## THIS FUNCTION MODIFIES CSP #
@@ -34,7 +40,7 @@ class Consistent:
         var     = bc.var2
         if reverse:
             var = bc.var1
-        x = variable.domain[0]
+        x = (variable.domain)[0]
         new_domain = []
         for y in var.domain:
             if (reverse and bc.func(y,x)) or ((not reverse) and bc.func(x,y)):
@@ -47,7 +53,7 @@ class Consistent:
         domain      = []
         domains     = []
         new_domains = []
-        x           = variable.domain[0]
+        x           = (variable.domain)[0]
         for i,v in enumerate(gc.vars):
             if variable.name == v.name:
                 index = i
@@ -56,9 +62,9 @@ class Consistent:
                 new_domains.append([])
         args_list = list(product(*domains))
         for args in args_list:
-            arg = list(args)
-            arg.insert(index, x)
-            if gc.func(*arg):
+            all_args = list(args)
+            all_args.insert(index, x)
+            if gc.func(*all_args):
                 for i,v in enumerate(args):
                     if v not in new_domains[i]:
                         new_domains[i].append(v)

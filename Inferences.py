@@ -22,7 +22,7 @@ class Inference:
         inference = dict()
         consistent = Consistent()
         for key in csp.variables:
-            inference[key] = self.copy(csp.variables[key])
+            inference[key] = csp.variables[key].copy()
         for constraint in csp.constraints:
             if constraint.contains(variable):
                 if isinstance(constraint, BinaryConstraint):
@@ -37,7 +37,7 @@ class Inference:
         inference = dict()
         consistent = Consistent()
         for key in csp.variables:
-            inference[key] = self.copy(csp.variables[key])
+            inference[key] = csp.variables[key].copy()
         for constraint in csp.constraints:
             if constraint.contains(variable):
                 if isinstance(constraint, BinaryConstraint):
@@ -50,13 +50,6 @@ class Inference:
     
     def noInference(self, csp, var):
         return csp.variables
-    
-    ####################################    
-    ## INTERNAL USE UTILITY FUNCTIONS ##
-    ####################################
-    
-    def copy(self, variable):
-        return ConstraintVar(list(variable.domain), variable.name)
     
     ############################
     ## EXTERNAL USE FUNCTIONS ##

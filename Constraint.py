@@ -1,3 +1,4 @@
+from copy import deepcopy
 # This is demonstrating a "class" implementation of AC3. You can accomplish the same with lists. For the project, you can choose either.
 
 # The primary problem set-up consists of "variables" and "constraints":
@@ -28,7 +29,7 @@ class ConstraintVar:
             
     def copy(self):
         new_copy = ConstraintVar(list(self.domain),self.name)
-        new_copy.neighbors = list(self.neighbors)
+        #new_copy.neighbors = list(self.neighbors)
         return new_copy
 
 class UnaryConstraint:
@@ -60,7 +61,7 @@ class UnaryConstraint:
         return UnaryConstraint(self.var.copy(), self.func)
     
     def link(self,variables):
-        variables[self.var.name] = self.var
+        self.var = variables[self.var.name]
 
 class BinaryConstraint:
     # v1 and v2 should be of class ConstraintVar
@@ -101,8 +102,8 @@ class BinaryConstraint:
         return BinaryConstraint(self.var1.copy(), self.var2.copy(), self.func)
         
     def link(self,variables):
-        variables[self.var1.name] = self.var1
-        variables[self.var2.name] = self.var2
+        self.var1 = variables[self.var1.name]
+        self.var2 = variables[self.var2.name]
         
 class GlobalConstraint:
     # vars should be a list of ConstraintVar objects
@@ -156,7 +157,7 @@ class GlobalConstraint:
     
     def link(self,variables):
         for var in self.vars:
-            variables[var.name] = var
+            var = variables[var.name]
         
 class ConstraintSatisfactionProblem:
     # This class contains the following variables:
@@ -175,9 +176,12 @@ class ConstraintSatisfactionProblem:
     def copy(self):
         copy_variables   = dict()
         copy_constraints = []
+        for key in self.variables:
+            copy_variables[key] = self.variables[key].copy()
         for constraint in self.constraints:
-            copy_constraints.append(constraint.copy())
-            copy_constraints[-1].link(copy_variables)
+            copy_constraint = constraint.copy()
+            copy_constraint.link(copy_variables)
+            copy_constraints.append(copy_constraint)
         return ConstraintSatisfactionProblem(copy_variables, copy_constraints)
     
     

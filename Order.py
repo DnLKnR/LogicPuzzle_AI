@@ -29,9 +29,9 @@ class ValueOrder:
         '''Computes and returns a list that is ordered based on
            the number of values that will be ruled out if a certain
            value is chosen....very high in time-complexity '''
-        # TODO: Fix issue where count is unaltered for each value
         value_pair = []
         for value in var.domain:
+            #print("For value - " + str(value))
             copy_csp = csp.copy()
             copy_csp.variables[var.name].domain = [value]
             variable = copy_csp.variables[var.name]
@@ -39,9 +39,12 @@ class ValueOrder:
             count = 0
             for key in copy_csp.variables:
                 count += (len(csp.variables[key].domain) - len(copy_csp.variables[key].domain))
+                #print("Domain changes from:\t" + str(csp.variables[key].domain))
+                #print("Domain changes to:\t" + str(copy_csp.variables[key].domain))
             value_pair.append([value,count])
+            del copy_csp
         value_pair = sorted(value_pair,key=lambda x: x[1])
-        print(value_pair)
+        #print(value_pair)
         sorted_domain = []
         for v in value_pair:
             sorted_domain.append(v[0])

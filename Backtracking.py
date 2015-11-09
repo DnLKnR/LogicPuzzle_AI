@@ -24,17 +24,20 @@ class BacktrackingSearch:
             self.printDomains(solution)
         
     def Backtrack(self,csp):
-        '''Recursive Backtracking search, built around the pseudocode
+        '''Recursive Backtracking search, built around the pseudo-code
            that is presented on page 215 in Artificial Intelligence:
            A Modern Approach textbook'''
         if self.isComplete(csp):
             return csp.variables
         var = self.NodeOrder.pop(csp)
+        #print("flag 1")
         for value in self.ValueOrder.get(var, csp):
             previous = dict()
-            previous[var.name] = self.copy(csp.variables[var.name])
+            previous[var.name] = csp.variables[var.name].copy()
             csp.variables[var.name].domain = [value]
-            if self.isConsistent(var, csp):
+            #print("flag 2")
+            if self.Consistent.evaluate(var, csp):
+                #print("flag: var is consistent")
                 inferences = self.Inference.get(csp, var)
                 if inferences != None:
                     self.add(csp.variables, inferences, previous)
@@ -45,31 +48,18 @@ class BacktrackingSearch:
         self.NodeOrder.push(csp,var)
         return None
     
-    def copy(self, variable):
-        return ConstraintVar(list(variable.domain), variable.name)
-    
     def revert(self, variables, previous):
         '''undo the changes made to the variables list by re-adding
            the values that are stored in the previous dictionary'''
         for key in previous:
-            variables[key].domain = list(previous[key].domain)
+            variables[key].domain = deepcopy(previous[key].domain)
             
     def add(self, variables, inferences, previous):
         '''add the inferences onto the variables dictionary and store
            the old values in previous in case they need to be undone'''
         for key in inferences:
-            previous[key]           = self.copy(variables[key])
-            variables[key].domain   = list(inferences[key].domain)
-        
-    def isConsistent(self, variable, csp):
-        '''check if the variable is consistent with all constraints
-           Note: in this case, we only care that the variable is
-           consistent.  No domains will be altered'''
-        for constraint in csp.constraints:
-            if constraint.contains(variable):
-                if not self.Consistent.evaluate(variable, constraint):
-                    return False
-        return True
+            previous[key]           = variables[key].copy()
+            variables[key].domain   = deepcopy(inferences[key].domain)
     
     def isComplete(self, csp):
         '''check through all the constraints in the constraint satisfaction

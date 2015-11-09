@@ -149,8 +149,6 @@ class PuzzleParser:
             csp.variables[variable] = ConstraintVar(domain,variable)
             
     def createConstraints(self,equation_parts,delim,number_base,csp):
-        modulo_mult = 1
-        places = []
         max_length = len(max(equation_parts[:-1],key=lambda x: len(x))) + 1
         for i in range(1,max_length):
             equation_arr = []
@@ -184,6 +182,7 @@ class PuzzleParser:
         domain          = list(range(number_base))
         ## Create the variables in the constraint satisfaction problem
         self.createVariables(equation,csp,domain)
+        self.allDiff(csp)
         variables = problem.split(delim)
         self.createConstraints(variables + [solution], delim, number_base, csp)
         decimal_place = 0
@@ -215,10 +214,8 @@ class PuzzleParser:
         
         vars = self.gatherVariables(parameters, csp)
         csp.constraints.append(GlobalConstraint(vars,fn))
-        self.allDiff(csp)
         print("Input: {0}".format(input))
         print("Starting Configuration:")
-        print("")
         printDomains(csp.variables)
         print("")
         return csp
