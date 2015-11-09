@@ -16,6 +16,20 @@ class ConstraintVar:
         self.domain     = [ v for v in d ]
         self.name       = n
         self.neighbors  = []
+        
+    def add(self,new):
+        exists = False
+        for neighbor in self.neighbors:
+            if neighbor.name == new.name:
+                exists = True
+                break
+        if not exists:
+            self.neighbors.append(new)
+            
+    def copy(self):
+        new_copy = ConstraintVar(list(self.domain),self.name)
+        new_copy.neighbors = list(self.neighbors)
+        return new_copy
 
 class UnaryConstraint:
     # v1 is of class ConstraintVar
@@ -37,6 +51,13 @@ class UnaryConstraint:
             return False
         else:
             return True
+    
+    def neighborize(self):
+        # Awww :(
+        pass
+    
+    def copy(self):
+        return UnaryConstraint(self.var.copy(), self.func)
 
 class BinaryConstraint:
     # v1 and v2 should be of class ConstraintVar
@@ -60,20 +81,12 @@ class BinaryConstraint:
         else:
             return True
     
-class TernaryConstraint:
-    # v1, v2, v3 should be of class ConstraintVar
-    # fn is the lambda expression for the constraint
-    # instantiate example: TernaryConstraint( A1, A2, A3, lambda x,y,z: x+y+z==10 ) 
-    def __init__(self, v1, v2, v3, fn):
-        self.var1 = v1
-        self.var2 = v2
-        self.var3 = v3
-        self.func = fn
-        
-    def contains(self,var):
-        if var.name in [self.var1.name, self.var2.name, self.var3.name]:
-            return True
-        return False
+    def neighborize(self):
+        self.var1.add(self.var2)
+        self.var2.add(self.var1)
+    
+    def copy(self):
+        return BinaryConstraint(self.var1.copy(), self.var2.copy(), self.func)
 
 class GlobalConstraint:
     # vars should be a list of ConstraintVar objects
@@ -101,6 +114,18 @@ class GlobalConstraint:
         else:
             return True
     
+    def neighborize(self):
+        for var1 in self.vars:
+            for var2 in self.vars:
+                if var1.name != var2.name:
+                    var1.add(var2)
+    
+    def copy(self):
+        copy_vars = []
+        for var in self.vars:
+            copy_vars.append(var.copy())
+        return GlobalConstraint(copy_vars, self.func)
+                        
 class ConstraintSatisfactionProblem:
     # This class contains the following variables:
     # input:       definition string,    ex. "+,basic+logic=pascal"
@@ -114,3 +139,17 @@ class ConstraintSatisfactionProblem:
         self.constraints    = constraints
         if self.constraints == None:
             self.constraints = []
+    
+    def copy(self):
+        copy_variables = dict()
+        for key in self.variables:
+            copy_variables[key] = self.variables[key].copy()
+        copy_constraints = []
+        for constraint in self.constraints:
+            copy_constraints.append(constraint.copy())
+        return ConstraintSatisfactionProblem(copy_variables, copy_constraints)
+    
+    
+    
+    
+    

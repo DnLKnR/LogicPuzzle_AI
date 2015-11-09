@@ -18,18 +18,19 @@ class AC3:
         for i in range(len(v)):
             for j in range(len(v)):
                 if ( i != j ) :
-                    constraints.append(BinaryConstraint( v[i],v[j],fn ))
-                    
-    def AC3(csp):
-        queue = []
-        
+                    constraints.append(BinaryConstraint(v[i],v[j],fn))
+    
+    def run(self,csp):
+        pass
+    
+    def AC3(self,csp,queue):
         while len(queue) > 0:
             var = queue.pop(0)
             if Revise(csp,var):
                 if len(var.domain) == 0:
                     return False
                 for n in var.n:
-                    queue.append(n)
+                    queue.append(constraint)
         return True
         
         # for example, for cols 1,2,3 (with keys A1,B1,C1 ...) generate A1!=B1!=C1, A2!=B2 ...
@@ -44,7 +45,7 @@ class AC3:
             # allDiff( constraints, aCol )
     #--------------------------------------------------------------------------------------------
     #########################            COMPLETE REVISE               ##########################
-    def Revise3( bc ):
+    def Revise(self, gc):
         dom1 = list(bc.var1.domain)
         dom2 = list(bc.var2.domain)
         dom3 = list(bc.var3.domain)
@@ -74,7 +75,7 @@ class AC3:
         bc.var3.domain = new_z
         
         
-    def Revise( bc ):
+    def Revise(self, bc):
         # The Revise() function from AC-3, which removes elements from var1 domain, if not arc consistent
         # A single BinaryConstraint instance is passed in to this function. 
         # MISSSING the part about returning sat to determine if constraints need to be added to the queue

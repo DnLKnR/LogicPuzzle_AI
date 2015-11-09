@@ -1,12 +1,13 @@
 from Consistent import *
 from Constraint import *
-
+from AC3        import *
 ### INFERENCES ###
 
 class Inference:
     def __init__(self,csp,order):
         self.csp = csp
         self.order = order.replace(' ','').lower()
+        #self.AC3    = AC3()
         if self.order in ["mac", "maintainingarcconsistency"]:
             self.function = self.maintainingArcConsistency
         elif self.order in ["fc","forwardchecking"]:

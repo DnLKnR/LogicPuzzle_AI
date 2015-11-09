@@ -19,7 +19,54 @@ class Consistent:
         else:
             print("Unrecognized instance passed to Consistent.consistent()")
             return None
-                
+    
+    def count(self, variable, constraint):
+        if isinstance(constraint, BinaryConstraint):
+            return self.countAC(variable, constraint)
+        elif isinstance(constraint, GlobalConstraint):
+            return self.countGAC(variable, constraint)
+        else:
+            return 0
+    
+    def countAC(self, variable, bc):
+        reverse = (bc.var2.name == variable.name)
+        domain = list(bc.var2.domain)
+        x = variable.domain[0]
+        count = 0
+        
+        for y in domain:
+            if (reverse and bc.func(y,x)) or ((not reverse) and bc.func(x,y)):
+                count += 1
+        
+        return count
+    
+    def countGAC(self, variable, gc):    
+        index       = -1
+        domain      = []
+        domains     = []
+        new_domains = []
+        for i,v in enumerate(gc.vars):
+            if variable.name == v.name:
+                index = i
+                x = variable.domain[0]
+            else:
+                domains.append(v.domain)
+                new_domains.append([])
+        args_list = list(product(*domains))
+        satisfy = False
+        for args in args_list:
+            arg = list(args)
+            arg.insert(index, x)
+            if gc.func(*arg):
+                offset = 0
+                for i,v in enumerate(args):
+                    if v not in new_domains[i]:
+                        new_domains[i].append(v)
+        count = 0
+        for i,new_domain in enumerate(new_domains):
+            count += (len(domains[i]) - len(new_domain))
+        return count
+        
     def isNodeConsistent(self, variable, uc):
         for x in uc.var.domain:
             if not uc.func(x):
@@ -134,29 +181,6 @@ class Consistent:
         else:
             return None
     
-    #===========================================================================
-    # def generalizedArcConsistent(self, gc ):
-    #     domain      = list(gc.var[0].domain)
-    #     domains     = []
-    #     for v in gc.vars[1:]:
-    #         domains.append(v.domain)
-    #     # Product takes in a list of lists and returns all
-    #     # possible forward combinations of one element in each list
-    #     # ex. [[1,2,3],[2,3,4],[4,5,6]] => [(1,2,4),(1,2,5),...(3,4,6)]
-    #     args_list = list(product(*domains))
-    #     # Loop through all arg combinations, and find ones where the first
-    #     # variable cannot satisfy the defined function and remove it 
-    #     # from the domain of the first variable
-    #     for x in domain:
-    #         satisfy = False
-    #         for args in args_list:
-    #             if gc.fn(x,*args):
-    #                 satisfy = True
-    #                 break
-    #         if not satisfy:
-    #             gc.var1.domain.remove(x)
-    #===========================================================================
-         
     def pathConsistent(self, tc ):
         domain1 = list(tc.var1.domain)
         domain2 = list(tc.var2.domain)

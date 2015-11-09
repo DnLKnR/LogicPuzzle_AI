@@ -3,14 +3,8 @@ from Consistent import *
 from Inferences import *
 from Order  import NodeOrder, ValueOrder
 from copy   import deepcopy
-
-def printDomains( vars, n=3 ):
-    count = 0
-    for k in sorted(vars.keys()):
-        print( k,'{',vars[k].domain,'}, ',end="" )
-        count = count+1
-        if ( 0 == count % n ):
-            print(' ')
+import functools
+from functools import reduce
 
 class BacktrackingSearch:
     def __init__(self,csp,NodeOrdering,ValueOrdering,InferenceName):
@@ -25,7 +19,7 @@ class BacktrackingSearch:
         if solution == None:
             print("Failed")
         else:
-            printDomains(solution)
+            self.printDomains(solution)
         
     def Backtrack(self,csp):
         if self.isComplete(csp):
@@ -62,7 +56,6 @@ class BacktrackingSearch:
         for constraint in csp.constraints:
             if constraint.contains(variable):
                 if not self.Consistent.evaluate(variable, constraint):
-                    #print("faileddddd")
                     return False
         return True
     
@@ -75,3 +68,10 @@ class BacktrackingSearch:
                 return False
         return True
     
+    def printDomains(self, vars, n=3 ):
+        count = 0
+        for k in sorted(vars.keys()):
+            print( k,'{',vars[k].domain,'}, ',end="" )
+            count = count+1
+            if ( 0 == count % n ):
+                print(' ')

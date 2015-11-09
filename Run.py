@@ -13,5 +13,5 @@ text = f.read()
 f.close()
 for puzzle in text.split('\n'):
     csp = puzzleParser.setUpCrossMath(puzzle)
-    bts = BacktrackingSearch(csp,"mrv","no","mac")
+    bts = BacktrackingSearch(csp,"mrv","lcv","mac")
     bts.run(csp)

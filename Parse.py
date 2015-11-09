@@ -112,6 +112,7 @@ class PuzzleParser:
             function = eval(constraint[1])
             gc = GlobalConstraint(constraintVars,function)
             csp.constraints.append(gc)
+            gc.neighborize()
         
         self.allDiff(csp)
         print("")
