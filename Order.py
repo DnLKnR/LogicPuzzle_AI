@@ -1,5 +1,4 @@
 from Constraint import *
-from AC3        import *
 
 ## Domain Value Ordering functions for Backtracking Search ##
 class ValueOrder:
@@ -15,25 +14,26 @@ class ValueOrder:
         
     ## VALUE ORDERING FUNCTIONS (BELOW)
     ## THESE SHOULD NEVER DIRECTLY BE CALLED OUTSIDE OF THE CLASS   
-    def noOrder(self, var, assignment, csp):
+    def noOrder(self, var, csp):
         return var.domain
     
-    def randomOrder(self, var, assignment, csp):
+    def randomOrder(self, var, csp):
         return var.domain
     
-    def leastConstrainingOrder(self, var, assignment, csp):
-        min = 1000000000
-        var = ""
-        for key in csp.variables.iterkeys():
-            length = len(csp.variables[key])
-            if min > length:
-                var,max = key,length
-        return var
+    def leastConstrainingOrder(self, var, csp):
+        #=======================================================================
+        # min = 1000000000
+        # for key in csp.variables:
+        #     length = len(csp.variables[key])
+        #     if min > length:
+        #         max = length
+        #=======================================================================
+        return var.domain
     
     ## UTILITY FUNCTIONS, 
     ## THESE SHOULD ONLY BE CALLED OUTSIDE OF THE CLASS   
-    def get(self, var, assignment, csp):
-        self.function(var, assignment, csp)
+    def get(self, var, csp):
+        return self.function(var, csp)
 
 
 
@@ -51,37 +51,47 @@ class NodeOrder:
         else:
             self.function = self.noOrder
             
-        self.queue = self.function(csp)
+        self.function(csp,True)
 
     ## NODE ORDERING FUNCTIONS (BELOW)
     ## THESE SHOULD NEVER DIRECTLY BE CALLED OUTSIDE OF THE CLASS  
-    def randomOrder(self, csp):
-        pass
+    def randomOrder(self,csp,create=False):
+        if create:
+            self.queue = []
+            for key in csp.variables:
+                self.queue.append(csp.variables[key])
 
-    def noOrder(self, csp):
-        pass
+    def noOrder(self,csp,create=False):
+        if create:
+            self.queue = []
+            for key in csp.variables:
+                self.queue.append(csp.variables[key])
 
-    def minimumRemainingValuesOrder(self, csp):
-        queue = []
-        for key in csp.variables.iterkeys():
-            queue.append(csp.variables[key])
-        queue = sorted(queue, key=lambda x: len(x.domain))
-        return queue
+    def minimumRemainingValuesOrder(self,csp,create=False):
+        if create:
+            self.queue = []
+            for key in csp.variables:
+                self.queue.append(csp.variables[key])
+        
+        self.queue = sorted(self.queue, key=lambda x: len(x.domain))
 
     def degreeOrder(self, csp):
         pass
     
     ## UTILITY FUNCTIONS, 
     ## THESE SHOULD ONLY BE CALLED OUTSIDE OF THE CLASS
-    def get(self,index,reset=False):
-        if reset:
-            self.queue = self.function(csp)
+    def get(self,csp,index=0,reset=False):
+        self.function(csp,reset)
         return self.queue[index]
         
-    def pop(self,index=0,reset=False):
-        if reset:
-            self.queue = self.function(csp)
+    def pop(self,csp,index=0,reset=False):
+        self.function(csp,reset)
         return self.queue.pop(index)
+    
+    def push(self,csp,var,index=0,reset=False):
+        self.queue.insert(0,var)
+        self.function(csp,reset)
+        
         
     
     

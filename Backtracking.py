@@ -1,7 +1,16 @@
 from Constraint import *
 from Consistent import *
+from Inferences import *
 from Order  import NodeOrder, ValueOrder
 from copy   import deepcopy
+
+def printDomains( vars, n=3 ):
+    count = 0
+    for k in sorted(vars.keys()):
+        print( k,'{',vars[k].domain,'}, ',end="" )
+        count = count+1
+        if ( 0 == count % n ):
+            print(' ')
 
 class BacktrackingSearch:
     def __init__(self,csp,NodeOrdering,ValueOrdering,InferenceName):
@@ -18,39 +27,43 @@ class BacktrackingSearch:
         else:
             printDomains(solution)
         
-    
     def Backtrack(self,csp):
         if self.isComplete(csp):
             return csp.variables
-        variable = self.NodeOrder.get(reset=True)
-        for value in self.ValueOrder.get(variable,csp):
-            previous                     = dict()
-            previous[variable.name]      = csp.variables[variable.name]
-            csp.variables[variable.name] = [value]
-            
-            if self.isConsistent(variable, csp):
-                inferences = self.Inference.get()
+        var = self.NodeOrder.pop(csp)
+        for value in self.ValueOrder.get(var, csp):
+            previous                = dict()
+            previous[var.name]      = self.copy(csp.variables[var.name])
+            csp.variables[var.name].domain = [value]
+            if self.isConsistent(var, csp):
+                printDomains(csp.variables)
+                inferences = self.Inference.get(csp)
                 if inferences != None:
                     self.add(csp.variables, inferences, previous)
                     result = self.Backtrack(csp)
                     if result != None:
                         return result
             self.revert(csp.variables, previous)
+        self.NodeOrder.push(csp,var)
         return None
     
+    def copy(self, variable):
+        return ConstraintVar(variable.domain, variable.name)
+    
     def revert(self, variables, previous):
-        for key in previous.iterkeys():
-            variables[key] = previous[key]
+        for key in previous:
+            variables[key].domain = previous[key].domain
             
     def add(self, variables, inferences, previous):
-        for key in inferences.iterkeys():
-            previous[key]   = variables[key]
-            variables[key]  = inferences[key]
+        for key in inferences:
+            previous[key]           = self.copy(variables[key])
+            variables[key].domain   = inferences[key].domain
         
     def isConsistent(self, variable, csp):
         for constraint in csp.constraints:
             if constraint.contains(variable):
                 if not self.Consistent.evaluate(variable, constraint):
+                    #print("faileddddd")
                     return False
         return True
     
@@ -58,8 +71,8 @@ class BacktrackingSearch:
         for constraint in csp.constraints:
             if not constraint.complete():
                 return False
-        for variable   in csp.variables:
-            if len(variable.domain) != 1:
+        for key   in csp.variables:
+            if len(csp.variables[key].domain) != 1:
                 return False
         return True
     

@@ -1,6 +1,6 @@
 import functools
 from functools import reduce
-from Backtracking import *
+from Backtracking import BacktrackingSearch
 from Parse import PuzzleParser
 def allDiff( constraints, v ):    
     # generate a list of constraints that implement the allDiff constraint for all variable combinations in v
@@ -227,14 +227,7 @@ def tryAC3():
     #print('----------------------------------------------------------')
     #print(' SUBMIT your code via TurnItIn (whatever state it is in when class is over is fine.')
     '''
-puzzleParser = PuzzleParser()
-f = open('Test/testCrossMath.txt','r')
-text = f.read()
-f.close()
-for puzzle in text.split('\n'):
-    csp = puzzleParser.setUpCrossMath(puzzle)
-    bts = BacktrackingSearch(csp,"","","")
-    bts.run()
+
     
     
 

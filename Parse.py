@@ -1,9 +1,30 @@
 from Constraint import *
-from AC3 import *
+
+
+
+def printDomains( vars, n=3 ):
+    count = 0
+    for k in sorted(vars.keys()):
+        print( k,'{',vars[k].domain,'}, ',end="" )
+        count = count+1
+        if ( 0 == count % n ):
+            print(' ')
 
 class PuzzleParser:
     def __init__(self):
         pass
+    
+    def allDiff(self,csp):    
+        # generate a list of constraints that implement the allDiff constraint for all variable combinations in v
+        # constraints is a preconstructed list. v is a list of ConstraintVar instances.
+        # call example: allDiff( constraints, [A1,A2,A3] ) will generate BinaryConstraint instances for [[A1,A2],[A2,A1],[A1,A3] ...
+        fn = lambda x,y: x != y
+        for key1 in csp.variables:
+            for key2 in csp.variables:
+                if key1 != key2:
+                    csp.constraints.append(BinaryConstraint(csp.variables[key1], 
+                                                            csp.variables[key2], 
+                                                            fn))
     
     def getVars(self,equation):
         special_char = "!@#$%^&*()_+-=[]\\{}|;\':\",./<>? "
@@ -31,7 +52,8 @@ class PuzzleParser:
         ## Input should be a single line, defining one problem ##
         input   = input.replace(' ','').replace('\r','').replace('\n','')
         equations = input.split(',')
-        variables = []
+        variables   = []
+        constraints = []
         #Set up the variables and constraints
         for equation in equations:
             problem, solution = equation.split('=')
@@ -42,17 +64,24 @@ class PuzzleParser:
             vars_str = ','.join(vars)
             # print(vars_str)
             relation = equation.replace('=','==')
-            function = eval("lambda {0}:{1}".format(vars_str, relation))
-            # print(stringFn)
-            csp.constraints.append(GlobalConstraint(vars, function))
+            function = "lambda {0}:{1}".format(vars_str, relation)
+            constraints.append([vars,function])
             
         #Set up the domains
         length = len(variables)
         for name in variables:
             domain = list(range(1, length + 1))
             csp.variables[name] = ConstraintVar(domain, name)
+        for constraint in constraints:
+            constraintVars, varNames = [], constraint[0]
+            for name in varNames:
+                constraintVars.append(csp.variables[name])
+            function = eval(constraint[1])
+            gc = GlobalConstraint(constraintVars,function)
+            csp.constraints.append(gc)
         
-        printDomains(csp.variables, 3)
+        self.allDiff(csp)
+        printDomains(csp.variables)
         print("")
         
         return csp
