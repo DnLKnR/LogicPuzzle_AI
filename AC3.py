@@ -1,7 +1,5 @@
 import functools
 from functools import reduce
-from Backtracking import BacktrackingSearch
-from Parse import PuzzleParser
 from Constraint import *
 from itertools import product
 
@@ -20,25 +18,36 @@ class AC3:
                     constraints.append(BinaryConstraint(v[i],v[j],fn))
     
     def run(self,csp):
+        # fill the queue with all the constraints
         queue = []
         for constraint in csp.constraints:
             constraint.neighborize()
             queue.append(constraint)
+        # supply the AC3 function with the queue
         self.AC3(csp,queue)
+        # this should display the answer?
         self.printDomains(csp.variables)
     
     def AC3(self,csp,queue):
         while len(queue) > 0:
+            #Get a constraint from the queue
             constraint = queue.pop(0)
             self.printDomains(csp.variables)
+            #Revise the domains based on the constraint
             if self.Revise(csp, constraint):
+                #if a revised domain becomes empty, we failed
                 if self.isEmpty(constraint):
                     return False
+                #otherwise, collect all the neighbors of the variables
+                #in the constraint
                 for neighbor in self.getNeighbors(constraint,csp):
+                    #extend the queue
                     queue.extend(self.getConstraints(neighbor,csp))
         return True
     
     def Revise(self, csp, constraint):
+        #Check to see which type of constraint the object is
+        #and choose the appropriate revise function
         if isinstance(constraint, BinaryConstraint):
             return self.ReviseAC(csp, constraint)
         elif isinstance(constraint, GlobalConstraint):
@@ -47,6 +56,7 @@ class AC3:
             
         
     def ReviseAC(self, csp, bc):
+        #The basic AC Binary Constraint Revise function
         dom1 = list(bc.var1.domain)
         dom2 = list(bc.var2.domain)
         revised = False
@@ -65,30 +75,46 @@ class AC3:
         return revised
     
     def ReviseGAC(self, csp, gc):
+        #boolean stuffs
         revised,chosen = False,False
+        #index of that random selected variable
         index          = -1
+        #randomly selected variables domain
         domain         = []
+        #will contain all variable domains in global constraint
         domains        = []
         for i,v in enumerate(gc.vars):
+            #Here I am randomly selecting a variable to focus on
+            #I dont know which I should choose in the list of
+            #variables for gc (Global Constraint)
             if len(v.domain) > 1 and not chosen:
                 index = i
                 domain = list(v.domain)
                 chosen = True
+            #Collect all the variables domains
             domains.append(v.domain)
+        #Go through the domain of my randomly selected variable
         for x in domain:
             satisfy = False
+            #force the domain to a single value
             domains[index] = [x]
             print(domains[index])
+            #Create all possible arg combinations and iterate them
             for args in product(*domains):
+                #If the arg combination works, it is satisfied
                 if gc.func(*args):
                     satisfy = True
                     break
+            #if not arg combination found using x, remove it
             if not satisfy:
                 gc.vars[index].domain.remove(x)
                 revised = True
+        #return whether or not I was capable of revising it
         return revised
         
     def isEmpty(self,constraint):
+        # check if a domain is empty for any variable within
+        # a binary or global constraint
         if isinstance(constraint, BinaryConstraint):
             for var in [constraint.var1, constraint.var2]:
                 if len(var.domain) == 0:
@@ -100,6 +126,7 @@ class AC3:
         return False
     
     def getNeighbors(self,constraint,csp):
+        # collect all the neighbors from a constraint's variables
         if isinstance(constraint, BinaryConstraint):
             return list(constraint.var1.neighbors)
         elif isinstance(constraint, GlobalConstraint):
@@ -117,7 +144,7 @@ class AC3:
                 if constraint.var2.name == variable.name:
                     constraints.append(constraint)
             elif isinstance(constraint, GlobalConstraint):
-                if constraint.constains(variable):
+                if constraint.contains(variable):
                     constraints.append(constraint)
         return constraints
     

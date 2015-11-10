@@ -41,7 +41,7 @@ class PuzzleParser:
                 if key1 != key2: #and [key2,key1] not in created:
                     csp.constraints.append(BinaryConstraint(csp.variables[key1],csp.variables[key2],fn))
                     #created.append([key1,key2])
-                    self.printConstraint([key1,key2], "lambda x,y: x != y")
+                    # self.printConstraint([key1,key2], "lambda x,y: x != y")
     
     def getVars(self,equation):
         special_char = "!@#$%^&*()_+-=[]\\{}|;\':\",./<>? "

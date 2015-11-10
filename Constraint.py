@@ -19,6 +19,8 @@ class ConstraintVar:
         self.neighbors  = []
         
     def add(self,new):
+        '''Check if new variable already exists as a neighbor,
+           if it doesnt, add it to the neighbor list'''
         exists = False
         for neighbor in self.neighbors:
             if neighbor.name == new.name:
@@ -28,6 +30,7 @@ class ConstraintVar:
             self.neighbors.append(new)
             
     def copy(self):
+        '''Return a copy of this object with all content copied as well'''
         new_copy = ConstraintVar(list(self.domain),self.name)
         #new_copy.neighbors = list(self.neighbors)
         return new_copy
@@ -41,11 +44,21 @@ class UnaryConstraint:
         self.func = fn
         
     def contains(self,var):
+        '''check if var exists in the constraint'''
         if self.var.name == var.name:
             return True
         return False
     
+    def unassigned(self, variable):
+        '''Check if any domains the other variables of this constraint
+           are still unassigned (meaning domain is not a single value.
+           return 0, this function is for abstract purposes'''
+        return 0
+    
     def complete(self):
+        '''Check if the variables' domains in this constraint 
+           satisfy the constraint function as well as only contains
+           one value in their domains'''
         if len(self.var.domain) != 1:
             return False
         elif not self.func(self.var.domain[0]):
@@ -54,13 +67,19 @@ class UnaryConstraint:
             return True
     
     def neighborize(self):
+        '''Add all variables in this constraint to all other 
+           variables neighbors list.  This function is here
+           for abstraction purposes.'''
         #DO NOTHING
         pass
     
     def copy(self):
+        '''Return a copy of this object with all content copied as well'''
         return UnaryConstraint(self.var.copy(), self.func)
     
     def link(self,variables):
+        '''This function likes the list of variables passed in to this
+           function to the variables constained within this class'''
         self.var = variables[self.var.name]
 
 class BinaryConstraint:
@@ -73,11 +92,15 @@ class BinaryConstraint:
         self.func = fn
     
     def contains(self,var):
+        '''check if var exists in the constraint'''
         if var.name in [self.var1.name, self.var2.name]:
             return True
         return False
     
     def complete(self):
+        '''Check if the variables' domains in this constraint 
+           satisfy the constraint function as well as only contains
+           one value in their domains'''
         if len(self.var1.domain) != 1 or len(self.var2.domain) != 1:
             return False
         elif not self.func(self.var1.domain[0],self.var2.domain[0]):
@@ -86,6 +109,8 @@ class BinaryConstraint:
             return True
     
     def unassigned(self, variable):
+        '''Check if any domains the other variables of this constraint
+           are still unassigned (meaning domain is not a single value'''
         if variable.name == self.var1.name:
             if len(self.var2.domain) > 1:
                 return 1
@@ -95,13 +120,18 @@ class BinaryConstraint:
         return 0
     
     def neighborize(self):
+        '''Add all variables in this constraint to all other 
+           variables neighbors list '''
         self.var1.add(self.var2)
         self.var2.add(self.var1)
     
     def copy(self):
+        '''Return a copy of this object with all content copied as well'''
         return BinaryConstraint(self.var1.copy(), self.var2.copy(), self.func)
         
     def link(self,variables):
+        '''This function likes the list of variables passed in to this
+           function to the variables constained within this class'''
         self.var1 = variables[self.var1.name]
         self.var2 = variables[self.var2.name]
         
@@ -114,6 +144,8 @@ class GlobalConstraint:
         self.func = fn
     
     def unassigned(self, variable):
+        '''Check if any domains the other variables of this constraint
+           are still unassigned (meaning domain is not a single value'''
         unassigned  = False
         exists      = False
         for var in self.vars:
@@ -126,12 +158,16 @@ class GlobalConstraint:
         return 0
     
     def contains(self, var):
+        '''check if var exists in the constraint'''
         for v in self.vars:
             if var.name == v.name:
                 return True
         return False
         
     def complete(self):
+        '''Check if the variables' domains in this constraint 
+           satisfy the constraint function as well as only contains
+           one value in their domains'''
         args = []
         for var in self.vars:
             if len(var.domain) != 1:
@@ -144,18 +180,23 @@ class GlobalConstraint:
             return True
     
     def neighborize(self):
+        '''Add all variables in this constraint to all other 
+           variables neighbors list '''
         for var1 in self.vars:
             for var2 in self.vars:
                 if var1.name != var2.name:
                     var1.add(var2)
     
     def copy(self):
+        '''Return a copy of this object with all content copied as well'''
         copy_vars = []
         for var in self.vars:
             copy_vars.append(var.copy())
         return GlobalConstraint(copy_vars, self.func)
     
     def link(self,variables):
+        '''This function likes the list of variables passed in to this
+           function to the variables constained within this class'''
         for var in self.vars:
             var = variables[var.name]
 
@@ -174,6 +215,7 @@ class ConstraintSatisfactionProblem:
             self.constraints = []
     
     def copy(self):
+        '''Return a copy of this object with all content copied as well'''
         copy_variables   = dict()
         copy_constraints = []
         for key in self.variables:
@@ -185,9 +227,11 @@ class ConstraintSatisfactionProblem:
         return ConstraintSatisfactionProblem(copy_variables, copy_constraints)
     
     def sort(self):
+        '''Sort the constraints by the definition of the rank function'''
         sorted(self.constraints,key=lambda x: self.rank(x))
         
     def rank(self,constraint):
+        '''Rank constraints based upon how many variables they contain'''
         if isinstance(constraint, UnaryConstraint):
             return 1
         elif isinstance(constraint, BinaryConstraint):

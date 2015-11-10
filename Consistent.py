@@ -6,66 +6,31 @@ class Consistent:
     def __init__(self):
         pass
     
-    
-    ### Probably delete this function
-    def infer(self, variable, inference, csp):
-        for constraint in csp.constraints:
-            #print("evaluating inferences...")
-            if isinstance(constraint, BinaryConstraint) and constraint.contains(variable):
-                #if isinstance(constraint, UnaryConstraint):
-                #    print("starting Node Consistency")
-                #    start = time()
-                #    inference = self.inferNC(variable, constraint, inference)
-                #    end   = time()
-                #    print("completed Node Consistency in {0}".format(end-start))
-                #print("evaluating inferences that contain variable...")
-                #if :
-                print("starting Arc Consistency")
-                start = time()
-                inference = self.inferAC(variable, constraint, inference)
-                end   = time()
-                print("completed Arc Consistency in {0}".format(end-start))
-                #elif isinstance(constraint, GlobalConstraint):
-                #    print("starting Generalized Arc Consistency")
-                #    start = time()
-                #    inference = self.inferGAC(variable, constraint, inference)
-                #    end   = time()
-                #    print("completed Generalized Arc Consistency in {0}".format(end-start))
-                if inference == None:
-                    print("...result False")
-                    return None
-        print("...result True")
-        return inference
-    
     def evaluate(self, variable, csp):
-        #print(len(csp.constraints))
+        '''this function simply evalates whether or not the new variable's 
+           domain creates an empty domain for another variable elsewhere.
+           If it does, return false so we can test another value, otherwise
+           return true.'''
         for constraint in csp.constraints:
-            #print("evaluating...")
             if constraint.contains(variable):
                 if isinstance(constraint, UnaryConstraint):
-                    print("evaluating Node Consistency",end="")
                     if not self.isNC(variable, constraint):
-                        print("...result: false")
-                        return False
-                    print("...result: true")
                 elif isinstance(constraint, BinaryConstraint):
-                    print("evaluating Arc Consistency",end="")
                     if not self.isAC(variable, constraint):
-                        print("...result: false")
                         return False
-                    print("...result: true")
                 elif isinstance(constraint, GlobalConstraint):
-                    print("evaluating Generalized Arc Consistency",end="")
                     if not self.isGAC(variable, constraint):
-                        print("...result: false")
                         return False
-                    print("...result: true")
                 else:
                     print("Unrecognized instance passed to Consistent.consistent()")
                     return True
         return True
     
     def execute(self, variable, csp):
+        '''this function is only used by Least Constraining Value Order.
+           This function acts like evaluate() except it modifies all the
+           domains in CSP to meet the constraints with the new domain defined
+           in variable.'''
         ## THIS FUNCTION MODIFIES CSP #
         for constraint in csp.constraints:
             if constraint.contains(variable):
@@ -75,6 +40,8 @@ class Consistent:
                     self.execGAC(variable, constraint)
     
     def execNC(self, variable, nc):
+        '''Execute the variable as an addition to the constraint
+           and update the domains to satisfy it'''
         domain = list(uc.var.domain)
         for x in domain[::-1]:
             if (uc.func(x) == False):
@@ -85,6 +52,10 @@ class Consistent:
         return None
     
     def execAC(self, variable, bc):
+        '''Execute the variable as an the new domain
+           for the corresponding variable in the constraint
+           to the constraint and update the other variables'
+           domains to satisfy it'''
         reverse = (bc.var2.name == variable.name)
         var     = bc.var2
         if reverse:
@@ -97,7 +68,11 @@ class Consistent:
                     new_domain.append(y)
         var.domain = new_domain
     
-    def execGAC(self, variable, gc):    
+    def execGAC(self, variable, gc):
+        '''Execute the variable as an the new domain
+           for the corresponding variable in the constraint
+           to the constraint and update the other variables'
+           domains to satisfy it'''
         index       = -1
         domain      = []
         domains     = []
@@ -122,12 +97,16 @@ class Consistent:
             gc.vars[i].domain = new_domain
         
     def isNC(self, variable, uc):
+        '''Check if the variable's new domain is consistent
+           with the unary constraint (node consistent -> nc)'''
         for x in uc.var.domain:
             if not uc.func(x):
                 return False
         return True
     
     def isAC(self, variable, bc):
+        '''Check if the variable's new domain is consistent
+           with the binary constraint (arc consistent -> ac)'''
         reverse = (bc.var2.name == variable.name)
         if reverse:
             domain1 = list(bc.var2.domain)
@@ -148,43 +127,85 @@ class Consistent:
         return True
         
     def isGAC(self, variable, gc):
+        '''Check if the variable's new domain is consistent
+           with the global constraint (global consistent -> gc)'''
         index       = -1
         domain      = []
         domains     = []
+        # Gather all of the domains, and also store the domain
+        # of the variable we passed in as a parameter
         for i,v in enumerate(gc.vars):
             if variable.name == v.name:
                 index = i
                 domain = list(gc.vars[i].domain)
-            else:
-                domains.append(v.domain)
-                
-        args_iter = product(*domains)
+            domains.append(v.domain)
+        # Product takes in a list of lists and returns all
+        # possible forward combinations of one element in each list
+        # ex. [[1,2,3],[2,3,4],[4,5,6]] => [(1,2,4),(1,2,5),...(3,4,6)]
+        #args_list = list(product(*domains))
         for x in domain:
             satisfy = False
-            for args in args_iter:
-                args = list(args)
-                args.insert(index, x)
+            #Change the domain to single value for the variable we are evaluating
+            domains[index] = [x]
+            # iterate through all combinations
+            for args in product(*domains):
                 if gc.func(*args):
                     satisfy = True
                     break
+            #no possible combinations with value x in n-Ary constraint
             if not satisfy:
                 return False
-        
+        #if for each x, some combination args exist 
+        #to satisfy constraint then we return true
         return True
     
-    def isKC(self, variable, gc):
-        ## Gather the domains of all the variables and 
-        ## instantiate the array that will contain the
-        ## updated domains based on the global constraint
-        domains         = []
-        for v in gc.vars:
-            domains.append(v.domain)
-        for args in product(*domains):
-            if not gc.func(*args):
-                return False
-        return True
+    def inferNC(self, variable, uc, inference):
+        '''Any function with 'infer' infront of them take in a dictionary
+           of variables that are inferred by the adding of the variable 
+           onto the global constraint.  NC means node consistent that the
+           variable's domain must satisfy the unary constraint.  This function
+           is probably not used.  Only present for abstraction purposes.'''
+        domain = list(uc.var.domain)
+        for x in domain[::-1]:
+            if (uc.func(x) == False):
+                domain.remove(x)
+        if len(domain):
+            inference[variable.name] = ConstraintVar(domain, variable.name)
+            return inference
+        return None
     
+    def inferAC(self, variable, bc, inference):
+        '''Any function with 'infer' infront of them take in a dictionary
+           of variables that are inferred by the adding of the variable 
+           onto the global constraint. AC means arc consistent which means 
+           that for each value in the variable's domain, there has
+           to be some combination that satisfies in the constraint'''
+        new_domain_x = []
+        new_domain_y = []
+        for x in bc.var1.domain:
+            satisfy = False
+            for y in bc.var2.domain:
+                if bc.func(x,y):
+                    satisfy = True
+                    if y not in new_domain_y:
+                        new_domain_y.append(y)
+            if satisfy:
+                new_domain_x.append(x)
+        if len(new_domain_x) and bc.var1.name != variable.name:
+            inference[bc.var1.name] = ConstraintVar(new_domain_x, variable.name)
+            return inference
+        elif len(new_domain_y) and bc.var2.name != variable.name:
+            inference[bc.var2.name] = ConstraintVar(new_domain_y, variable.name)
+            return inference
+        else:
+            return None
+            
     def inferGAC(self, variable, gc, inference):
+        '''Any function with 'infer' infront of them take in a dictionary
+           of variables that are inferred by the adding of the variable 
+           onto the global constraint.  GAC means generalized arc consistent
+           which means that for each value in the variable's domain, there has
+           to be some combination that satisfies in the constraint'''
         index       = -1
         domain      = []
         domains     = []
@@ -214,7 +235,15 @@ class Consistent:
         
         return inference
     
+    
+    #########################################
+    ### IGNORE THESE FUNCTIONS, UNUSED  #####
+    ### TO BE DELETED                   #####
+    #########################################
+    
     def inferKC(self, variable, gc, inference):
+        
+        
         ## Gather the domains of all the variables and 
         ## instantiate the array that will contain the
         ## updated domains based on the global constraint
@@ -243,37 +272,6 @@ class Consistent:
             inference[gc.vars[i].name] = ConstraintVar(new_domain, gc.vars[i].name)
         return inference  
             
-    def inferNC(self, variable, uc, inference):
-        domain = list(uc.var.domain)
-        for x in domain[::-1]:
-            if (uc.func(x) == False):
-                domain.remove(x)
-        if len(domain):
-            inference[variable.name] = ConstraintVar(domain, variable.name)
-            return inference
-        return None
-    
-    def inferAC(self, variable, bc, inference):
-        new_domain_x = []
-        new_domain_y = []
-        for x in bc.var1.domain:
-            satisfy = False
-            for y in bc.var2.domain:
-                if bc.func(x,y):
-                    satisfy = True
-                    if y not in new_domain_y:
-                        new_domain_y.append(y)
-            if satisfy:
-                new_domain_x.append(x)
-        if len(new_domain_x) and bc.var1.name != variable.name:
-            inference[bc.var1.name] = ConstraintVar(new_domain_x, variable.name)
-            return inference
-        elif len(new_domain_y) and bc.var2.name != variable.name:
-            inference[bc.var2.name] = ConstraintVar(new_domain_y, variable.name)
-            return inference
-        else:
-            return None
-    
     def pathConsistent(self, tc ):
         domain1 = list(tc.var1.domain)
         domain2 = list(tc.var2.domain)
@@ -320,6 +318,18 @@ class Consistent:
         ## unaltered per the definition of K-consistency in the book
         for i,new_domain in enumerate(new_domains[:-1]):
             gc.vars[i] = new_domain
-             
+    
+    def isKC(self, variable, gc):
+        ## Gather the domains of all the variables and 
+        ## instantiate the array that will contain the
+        ## updated domains based on the global constraint
+        domains         = []
+        ## Make sure that all combinations satisfy constraint
+        for v in gc.vars:
+            domains.append(v.domain)
+        for args in product(*domains):
+            if not gc.func(*args):
+                return False
+        return True
              
     

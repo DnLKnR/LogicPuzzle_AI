@@ -32,7 +32,7 @@ class Inference:
                 #print("completed Arc Consistency in {0}".format(end-start))
                 if inference == None:
                     return None
-        print("...result True")
+        #print("...result True")
         return inference
     
     def maintainingArcConsistency(self, csp, variable):

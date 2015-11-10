@@ -134,14 +134,22 @@ class NodeOrder:
     ## EXTERNAL USE FUNCTIONS ##
     ############################
     def get(self,csp,index=0,reset=False):
+        '''Simply resorts the list through the function that was defined
+           when the class was instantiated, and returns the first element'''
         self.function(csp,reset)
         return self.queue[index]
         
     def pop(self,csp,index=0,reset=False):
+        '''Simply resorts the list through the function that was defined
+           when the class was instantiated, and removes and returns the 
+           first element'''
         self.function(csp,reset)
         return self.queue.pop(index)
     
     def push(self,csp,var,index=0,reset=False):
+        '''Simply adds the variable passed in to the function to the list
+           and resorts the list through the function that was defined
+           when the class was instantiated'''
         self.queue.insert(0,var)
         self.function(csp,reset)
         
