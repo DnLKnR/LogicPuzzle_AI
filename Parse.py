@@ -246,9 +246,10 @@ class PuzzleParser:
         return csp
     
     def printConstraint(self,variables,lambda_str):
-        print("Constraint Values:")
-        print("\tVariables:\t\t{0}".format(', '.join(variables)))
-        print("\tLambda Function:\t{0}".format(lambda_str))
+        #print("Constraint Values:")
+        #print("\tVariables:\t\t{0}".format(', '.join(variables)))
+        pass
+        #print("\tLambda Function:\t{0}".format(lambda_str))
         
         
     

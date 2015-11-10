@@ -72,7 +72,7 @@ class Consistent:
            for the corresponding variable in the constraint
            to the constraint and update the other variables'
            domains to satisfy it'''
-        print("execGAC was called")
+        #print("execGAC was called")
         domains     = []
         new_domains = []
         index       = -1
@@ -126,7 +126,7 @@ class Consistent:
     def isGAC(self, variable, gc):
         '''Check if the variable's new domain is consistent
            with the global constraint (global consistent -> gc)'''
-        print("isGAC was called")
+        #print("isGAC was called")
         domains     = []
         index       = -1
         # Gather all of the domains, and also store the domain
@@ -176,7 +176,7 @@ class Consistent:
            onto the global constraint. AC means arc consistent which means 
            that for each value in the variable's domain, there has
            to be some combination that satisfies in the constraint'''
-        print("inferAC was called")
+        #print("inferAC was called")
         new_domain = []
         if variable.name == bc.var1.name:
             for y in bc.var2.domain:
@@ -212,7 +212,7 @@ class Consistent:
            onto the global constraint.  GAC means generalized arc consistent
            which means that for each value in the variable's domain, there has
            to be some combination that satisfies in the constraint'''
-        print("inferGAC was called")
+        #print("inferGAC was called")
         index       = -1
         domain      = []
         domains     = []
