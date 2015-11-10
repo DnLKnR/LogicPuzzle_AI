@@ -14,9 +14,10 @@ class ConstraintVar:
     # instantiation example: ConstraintVar( [1,2,3],'A1' )
     # MISSING filling in neighbors to make it easy to determine what to add to queue when revise() modifies domain
     def __init__(self, d, n ):
-        self.domain     = [ v for v in d ]
-        self.name       = n
-        self.neighbors  = []
+        self.domain      = [ v for v in d ]
+        self.name        = n
+        self.neighbors   = []
+        self.constraints = []
         
     def add(self,new):
         '''Check if new variable already exists as a neighbor,
@@ -32,8 +33,15 @@ class ConstraintVar:
     def copy(self):
         '''Return a copy of this object with all content copied as well'''
         new_copy = ConstraintVar(list(self.domain),self.name)
-        #new_copy.neighbors = list(self.neighbors)
+        new_copy.constraints = self.constraints
+        new_copy.neighbors = self.neighbors
         return new_copy
+    
+    def neighborize(self):
+        variables = []
+        for constraint in self.constraints:
+            variables.extend(constraint.get())
+        self.neighbors = variables
 
 class UnaryConstraint:
     # v1 is of class ConstraintVar
@@ -49,7 +57,7 @@ class UnaryConstraint:
             return True
         return False
     
-    def unassigned(self, variable):
+    def unassigned(self):
         '''Check if any domains the other variables of this constraint
            are still unassigned (meaning domain is not a single value.
            return 0, this function is for abstract purposes'''
@@ -81,6 +89,10 @@ class UnaryConstraint:
         '''This function likes the list of variables passed in to this
            function to the variables constained within this class'''
         self.var = variables[self.var.name]
+        
+    def get(self):
+        '''return variables in an array'''
+        return [self.var]
 
 class BinaryConstraint:
     # v1 and v2 should be of class ConstraintVar
@@ -108,15 +120,13 @@ class BinaryConstraint:
         else:
             return True
     
-    def unassigned(self, variable):
+    def unassigned(self):
         '''Check if any domains the other variables of this constraint
            are still unassigned (meaning domain is not a single value'''
-        if variable.name == self.var1.name:
-            if len(self.var2.domain) > 1:
-                return 1
-        elif variable.name == self.var2.name:
-            if len(self.var1.domain) > 1:
-                return 1
+        if len(self.var2.domain) > 1:
+            return 1
+        if len(self.var1.domain) > 1:
+            return 1
         return 0
     
     def neighborize(self):
@@ -134,6 +144,10 @@ class BinaryConstraint:
            function to the variables constained within this class'''
         self.var1 = variables[self.var1.name]
         self.var2 = variables[self.var2.name]
+    
+    def get(self):
+        '''return variables in an array'''
+        return [self.var1,self.var2]
         
 class GlobalConstraint:
     # vars should be a list of ConstraintVar objects
@@ -143,17 +157,11 @@ class GlobalConstraint:
         self.vars = vars
         self.func = fn
     
-    def unassigned(self, variable):
+    def unassigned(self):
         '''Check if any domains the other variables of this constraint
            are still unassigned (meaning domain is not a single value'''
-        unassigned  = False
-        exists      = False
         for var in self.vars:
-            if var.name == variable.name:
-                exists = True
-            elif len(var.domain) > 1:
-                unassigned = True
-            if exists and unassigned:
+            if len(var.domain) > 1:
                 return 1
         return 0
     
@@ -186,6 +194,7 @@ class GlobalConstraint:
             for var2 in self.vars:
                 if var1.name != var2.name:
                     var1.add(var2)
+                    var2.add(var1)
     
     def copy(self):
         '''Return a copy of this object with all content copied as well'''
@@ -199,6 +208,10 @@ class GlobalConstraint:
            function to the variables constained within this class'''
         for var in self.vars:
             var = variables[var.name]
+        
+    def get(self):
+        '''return variables in an array'''
+        return self.vars
 
 class ConstraintSatisfactionProblem:
     # This class contains the following variables:

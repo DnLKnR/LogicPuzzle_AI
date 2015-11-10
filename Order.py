@@ -116,18 +116,18 @@ class NodeOrder:
             for key in csp.variables:
                 self.queue.append(csp.variables[key])
         
-        self.queue = sorted(self.queue, key=lambda x: self.evaluateDegree(x, csp.constraints), reverse=True)
+        self.queue = sorted(self.queue, key=lambda x: self.evaluateDegree(x), reverse=True)
     
     ####################################    
     ## INTERNAL USE UTILITY FUNCTIONS ##
     #################################### 
-    def evaluateDegree(self,variable,constraints):
+    def evaluateDegree(self,variable):
         '''evaluate how many constraints the variable is involved with 
            that still have unassigned (length of domain > 1) variables
            attached to them'''
         count = 0
-        for constraint in constraints:
-            count += constraint.unassigned(variable)
+        for constraint in variable.constraints:
+            count += constraint.unassigned()
         return count
     
     ############################

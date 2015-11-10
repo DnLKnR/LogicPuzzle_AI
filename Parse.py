@@ -40,6 +40,8 @@ class PuzzleParser:
             for key2 in csp.variables:
                 if key1 != key2: #and [key2,key1] not in created:
                     csp.constraints.append(BinaryConstraint(csp.variables[key1],csp.variables[key2],fn))
+                    csp.variables[key1].constraints.append(csp.constraints[-1])
+                    csp.variables[key2].constraints.append(csp.constraints[-1])
                     #created.append([key1,key2])
                     # self.printConstraint([key1,key2], "lambda x,y: x != y")
     
@@ -101,6 +103,7 @@ class PuzzleParser:
                 function = "lambda {0}:({1}){2}=={3}".format(vars_str,problem_1,problem_2,solution)
             constraints.append([vars,function])
             
+            
         #Set up the domains
         length = len(variables)
         for name in variables:
@@ -113,6 +116,8 @@ class PuzzleParser:
             function = eval(constraint[1])
             gc = GlobalConstraint(constraintVars,function)
             csp.constraints.append(gc)
+            for constraintVar in constraintVars:
+                constraintVar.constraints.append(gc)
             gc.neighborize()
         
         self.allDiff(csp)
@@ -159,6 +164,7 @@ class PuzzleParser:
                 var = csp.variables[part[0]]
                 fn  = lambda x: x != 0
                 csp.constraints.append(UnaryConstraint(var,fn))
+                var.constraints.append(csp.constraints[-1])
                 self.printConstraint(part[0], "lambda x: x != 0")
                 unary_var_str.append(part[0])
         #Make all Global Constraints, except for the final one
@@ -176,6 +182,8 @@ class PuzzleParser:
             vars = self.gatherVariables(parameters,csp)
             fn   = eval(lambda_fn)
             csp.constraints.append(GlobalConstraint(vars,fn))
+            for var in vars:
+                var.constraints.append(csp.constraints[-1])
             self.printConstraint(parameters, lambda_fn)
     
     def gatherVariables(self,varNames,csp):
@@ -228,6 +236,8 @@ class PuzzleParser:
         
         vars = self.gatherVariables(parameters, csp)
         csp.constraints.append(GlobalConstraint(vars,fn))
+        for var in vars:
+            var.constraints.append(csp.constraints[-1])
         self.printConstraint(parameters, lambda_fn)
         print("Input: {0}".format(input))
         print("Starting Configuration:")

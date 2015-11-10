@@ -21,35 +21,19 @@ class Inference:
     ############################  
     def forwardChecking(self, csp, variable):
         inference = dict()
-        for constraint in csp.constraints:
-            #print("evaluating inferences...")
-            #We only care about the arcs when we forward check
-            if isinstance(constraint, BinaryConstraint) and constraint.contains(variable):
-                #print("starting Arc Consistency")
-                #start = time()
+        for constraint in variable.constraints:
+            if isinstance(constraint, BinaryConstraint):
                 inference = self.consistent.inferAC(variable, constraint, inference)
-                #end   = time()
-                #print("completed Arc Consistency in {0}".format(end-start))
                 if inference == None:
                     return None
-        #print("...result True")
         return inference
     
     def maintainingArcConsistency(self, csp, variable):
         ## TODO: Implement after completing AC3
-        inference = dict()
-        consistent = Consistent()
-        for key in csp.variables:
-            inference[key] = csp.variables[key].copy()
-        for constraint in csp.constraints:
-            if constraint.contains(variable):
-                if isinstance(constraint, BinaryConstraint):
-                    consistent.AC(constraint, inference)
-                elif isinstance(constraint, GlobalConstraint):
-                    consistent.GAC(constraint, inference)
-                if inference == None:
-                    return None
-        return inference
+        ac3 = AC3()
+        csp_copy = csp.copy()
+        ac3.AC3(csp_copy, variable.constraints)
+        return csp_copy.variables
     
     def noInference(self, csp, var):
         return csp.variables
