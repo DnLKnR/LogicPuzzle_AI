@@ -70,6 +70,7 @@ class BacktrackingSearch:
         for key in csp.variables:
             if len(csp.variables[key].domain) != 1:
                 return False
+        
         return True
     
     def printDomains(self, vars, n=3 ):
