@@ -3,10 +3,11 @@ from Consistent import *
 from random     import random
 ## Domain Value Ordering functions for Backtracking Search ##
 class ValueOrder:
-    def __init__(self,csp,order):
+    def __init__(self,csp,order,GACEnabled):
+        self.GACEnabled = GACEnabled
         self.csp = csp
         self.order = order.replace(' ','').lower()
-        self.consistent = Consistent()
+        self.consistent = Consistent(GACEnabled)
         if self.order in ["lcv", "leastconstrainingvalue"]:
             self.function = self.leastConstrainingOrder
         elif self.order in ["r","random"]:

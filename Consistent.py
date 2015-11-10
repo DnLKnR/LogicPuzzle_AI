@@ -3,8 +3,8 @@ from itertools  import product
 from time import time
    
 class Consistent:
-    def __init__(self):
-        pass
+    def __init__(self,GACEnabled):
+        self.GACEnabled = GACEnabled
     
     def evaluate(self, variable, csp):
         '''this function simply evalates whether or not the new variable's 
@@ -35,7 +35,7 @@ class Consistent:
         for constraint in variable.constraints:
             if isinstance(constraint, BinaryConstraint):
                 self.execAC(variable, constraint)
-            elif isinstance(constraint, GlobalConstraint):
+            elif isinstance(constraint, GlobalConstraint) and self.GACEnabled:
                 self.execGAC(variable, constraint)
     
     def execNC(self, variable, nc):

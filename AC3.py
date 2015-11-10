@@ -5,8 +5,9 @@ from itertools import product
 from Consistent import *
 
 class AC3:
-    def __init__(self):
-        self.consistent = Consistent
+    def __init__(self,GACEnabled):
+        self.GACEnabled = GACEnabled
+        self.consistent = Consistent(self.GACEnabled)
     
     def allDiff(self, constraints, v):    
         # generate a list of constraints that implement the allDiff constraint for all variable combinations in v
@@ -22,7 +23,7 @@ class AC3:
         queue = []
         if isinstance(constraint, BinaryConstraint):
             queue.append((constraint, constraint.var1, constraint.var2))
-        elif isinstance(constraint, GlobalConstraint):
+        elif isinstance(constraint, GlobalConstraint) and self.GACEnabled:
             for var1 in constraint.vars:
                 for var2 in constraint.vars:
                     if var1.name != var2.name:
@@ -76,7 +77,7 @@ class AC3:
         #and choose the appropriate revise function
         if isinstance(constraint, BinaryConstraint):
             return self.ReviseAC(constraint,var1,var2)
-        if isinstance(constraint, GlobalConstraint):
+        if isinstance(constraint, GlobalConstraint) and self.GACEnabled:
             return self.ReviseGAC(constraint,var1,var2)
         return False
     
@@ -175,7 +176,7 @@ class AC3:
             for var in [constraint.var1, constraint.var2]:
                 if len(var.domain) == 0:
                     return True
-        elif isinstance(constraint, GlobalConstraint):
+        elif isinstance(constraint, GlobalConstraint) and self.GACEnabled:
             for var in constraint.vars:
                 if len(var.domain) == 0:
                     return True
@@ -190,7 +191,7 @@ class AC3:
                     neighbors.append(constraint.var2)
                 else:
                     neighbors.append(constraint.var1)
-            elif isinstance(constraint, GlobalConstraint):
+            elif isinstance(constraint, GlobalConstraint) and self.GACEnabled:
                 for var in constraint.vars:
                     if variable.name != var.name:
                         neighbors.append(var)

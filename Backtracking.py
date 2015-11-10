@@ -7,13 +7,14 @@ import functools
 from functools import reduce
 
 class BacktrackingSearch:
-    def __init__(self,csp,NodeOrdering,ValueOrdering,InferenceName, sort=True):
+    def __init__(self,csp,NodeOrdering,ValueOrdering,InferenceName, sort=True,GACEnabled=True):
         self.csp        = csp
         if sort: csp.sort()
+        self.GACEnabled = GACEnabled
         self.NodeOrder  = NodeOrder(self.csp, NodeOrdering)
-        self.ValueOrder = ValueOrder(self.csp, ValueOrdering)
-        self.Inference  = Inference(self.csp, InferenceName)
-        self.Consistent = Consistent()
+        self.ValueOrder = ValueOrder(self.csp, ValueOrdering,self.GACEnabled)
+        self.Inference  = Inference(self.csp, InferenceName,self.GACEnabled)
+        self.Consistent = Consistent(self.GACEnabled)
     
     def run(self,csp):
         '''Execute backtracking search on the constraint satisfaction
