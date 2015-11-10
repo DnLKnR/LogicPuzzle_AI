@@ -58,14 +58,16 @@ class AC3:
                     return False
                 #otherwise, collect all the neighbors of the variables
                 #in the constraint
-                for neighbor in var1.neighbors:
+                for neighbor in self.getNeighbors(var1):
+                    if neighbor.name == var1.name:
+                        continue
                     queue.extend(self.getConstraints(neighbor,var1))
         return True
     
     def getConstraints(self,variable1,variable2):
         queue = []
-        for constraint in variable2.constraints:
-            if constraint.contains(variable1):
+        for constraint in variable1.constraints:
+            if constraint.contains(variable2):
                 queue.append((constraint, variable1, variable2))
         return queue
     
@@ -74,7 +76,7 @@ class AC3:
         #and choose the appropriate revise function
         if isinstance(constraint, BinaryConstraint):
             return self.ReviseAC(constraint,var1,var2)
-        elif isinstance(constraint, GlobalConstraint):
+        if isinstance(constraint, GlobalConstraint):
             return self.ReviseGAC(constraint,var1,var2)
         return False
     
@@ -93,10 +95,10 @@ class AC3:
     
     def ReviseAC(self, bc, var1, var2):
         #The basic AC Binary Constraint Revise function
+        revised = False
         if var1.name == bc.var1.name:
             dom1 = list(var1.domain)
             dom2 = list(var2.domain)
-            revised = False
             # for each value in the domain of variable 1
             for x in dom1:
                 satisfy = False
@@ -108,10 +110,9 @@ class AC3:
                 if not satisfy:
                     bc.var1.domain.remove(x)
                     revised = True
-        else:
+        elif var2.name == bc.var2.name:
             dom1 = list(var1.domain)
             dom2 = list(var2.domain)
-            revised = False
             # for each value in the domain of variable 1
             for y in dom2:
                 satisfy = False
@@ -180,17 +181,20 @@ class AC3:
                     return True
         return False
     
-    def getNeighbors(self,constraint,csp):
+    def getNeighbors(self,variable):
         # collect all the neighbors from a constraint's variables
-        constraint.neighborize()
-        if isinstance(constraint, BinaryConstraint):
-            return constraint.var1.neighbors + constraint.var2.neighbors
-        elif isinstance(constraint, GlobalConstraint):
-            all_vars = []
-            for var in constraint.vars:
-                for neighbor in var.neighbors:
-                    all_vars.append(neighbor)
-            return all_vars
+        neighbors = []
+        for constraint in variable.constraints:
+            if isinstance(constraint, BinaryConstraint):
+                if variable.name == constraint.var1.name:
+                    neighbors.append(constraint.var2)
+                else:
+                    neighbors.append(constraint.var1)
+            elif isinstance(constraint, GlobalConstraint):
+                for var in constraint.vars:
+                    if variable.name != var.name:
+                        neighbors.append(var)
+        return neighbors
     
     
     
