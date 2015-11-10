@@ -145,7 +145,7 @@ class AC3:
         # the global constraint function.  Update the new domains with
         # their respective values.
         domain = list(var1.domain)
-        for x in var1.domain:
+        for x in domain:
             domains[index_1] = [x]
             satisfy = False
             for y in var2.domain:
