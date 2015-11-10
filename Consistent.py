@@ -15,6 +15,7 @@ class Consistent:
             if constraint.contains(variable):
                 if isinstance(constraint, UnaryConstraint):
                     if not self.isNC(variable, constraint):
+                        return False
                 elif isinstance(constraint, BinaryConstraint):
                     if not self.isAC(variable, constraint):
                         return False

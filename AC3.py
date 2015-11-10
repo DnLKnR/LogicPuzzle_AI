@@ -20,13 +20,29 @@ class AC3:
     def run(self,csp):
         # fill the queue with all the constraints
         queue = []
-        for constraint in csp.constraints:
-            constraint.neighborize()
-            queue.append(constraint)
+        
         # supply the AC3 function with the queue
-        self.AC3(csp,queue)
+        ## well shit....lets just keep looping
+        while not self.isComplete(csp):
+            for constraint in csp.constraints:
+                constraint.neighborize()
+                queue.append(constraint)
+            self.AC3(csp,queue)
         # this should display the answer?
         self.printDomains(csp.variables)
+    
+    def isComplete(self, csp):
+        '''check through all the constraints in the constraint satisfaction
+           problem to make sure that they are all met.  Also, make sure that
+           every variable has a domain of only one.  This prevents giving
+           multiple solutions.  We only want one solution'''
+        for constraint in csp.constraints:
+            if not constraint.complete():
+                return False
+        for key in csp.variables:
+            if len(csp.variables[key].domain) != 1:
+                return False
+        return True
     
     def AC3(self,csp,queue):
         while len(queue) > 0:
